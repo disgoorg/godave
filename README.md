@@ -17,7 +17,7 @@ them with [DisGo](github.com/disgoorg/disgo)
 This library uses CGO and dynamic linking to use libdave. As such, it needs to be installed in the system beforehand
 to build this library.
 
-> ![NOTE]
+> [!NOTE]
 > Due to the nature of this project, it might be necessary to re-install libdave when updating to a new GoDave version.
 > 
 > Versions requiring this will be denoted with a bump in the major version (for reference: major.minor.patch).
@@ -35,7 +35,7 @@ Once that step is complete, you can continue with the installation of GoDave.
 For a manual build, please clone https://github.com/discord/libdave and use revision
 `74979cb33febf4ddef0c2b66e57520b339550c17`.
 
-> ![NOTE]
+> [!NOTE]
 > We provide no guarantees for this version of GoDave to run for other revisions other than that the one mentioned above.
 > 
 > As the library evolves and new versions of libdave are released, the above revision will be updated to match the
