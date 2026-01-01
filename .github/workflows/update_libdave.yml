@@ -2,17 +2,16 @@ name: Update libdave
 
 on:
   workflow_dispatch:
-  schedule:
-    # Runs at 00:00 UTC every day
-    - cron: '0 0 * * *'
+#  schedule:
+#    # Runs at 00:00 UTC every day
+#    - cron: '0 0 * * *'
 
 permissions:
   contents: write
   pull-requests: write
 
 env:
-  #LIBDAVE_REPO: "https://github.com/discord/libdave"
-  LIBDAVE_REPO: "https://github.com/MinnDevelopment/libdave"
+  LIBDAVE_REPO: "https://github.com/discord/libdave"
 
 jobs:
   check-version:
@@ -172,7 +171,7 @@ jobs:
           process_artifacts() {
             platform=$1
             dest_dir="libdave/lib/$platform"
-          
+
             # Find and move files for this platform
             find downloaded_artifacts -name "*$platform*" -type f \( -name "*.so" -o -name "*.dylib" -o -name "*.dll" \) -exec cp {} "$dest_dir/" \;
           }
@@ -180,8 +179,6 @@ jobs:
           process_artifacts "linux"
           process_artifacts "darwin"
           process_artifacts "windows"
-
-          find downloaded_artifacts -name "dave.h" -exec cp {} libdave/cpp/includes/ \; -quit
 
           echo "${{ needs.check_version.outputs.latest_sha }}" > ${{ env.TARGET_SHA_FILE }}
 
