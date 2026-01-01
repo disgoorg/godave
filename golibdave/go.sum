@@ -1,10 +1,6 @@
-github.com/disgoorg/godave v0.0.0-20260101152117-8cda6ca8319e h1:aRB0CDGn342zsaZFHTnFYqkWwdolmmTYWXtb5WlneKk=
-github.com/disgoorg/godave v0.0.0-20260101152117-8cda6ca8319e/go.mod h1:k9wDox+sdz9bCxYU/TG1R2vbeZ/5kjdnDJ3zPEkkLJ8=
-github.com/disgoorg/godave v0.0.0-20260101153756-d6e3745b99c3 h1:yOyltT+0H+NPbXuxt2FZm5OCQ2F+ZL3PO8h1dOilh1M=
-github.com/disgoorg/godave v0.0.0-20260101153756-d6e3745b99c3/go.mod h1:k9wDox+sdz9bCxYU/TG1R2vbeZ/5kjdnDJ3zPEkkLJ8=
-github.com/disgoorg/godave/libdave v0.0.0-20260101152117-8cda6ca8319e h1:Z2a5K6Zpdjrz60fWZ5D2FyFwjFWu55R4ZAapwCFM8XM=
-github.com/disgoorg/godave/libdave v0.0.0-20260101152117-8cda6ca8319e/go.mod h1:CxundbQ722MpK3vD31kaOAxbu1+cFnnEKQDqQ7rpxEM=
-github.com/disgoorg/godave/libdave v0.0.0-20260101153756-d6e3745b99c3 h1:EYgEqn9F5mUH1au3hp0sGCUi8DguUcvjGUbui9nMGXQ=
-github.com/disgoorg/godave/libdave v0.0.0-20260101153756-d6e3745b99c3/go.mod h1:CxundbQ722MpK3vD31kaOAxbu1+cFnnEKQDqQ7rpxEM=
+github.com/disgoorg/godave v0.0.0-20260101154543-2b1097f939f6 h1:0I/njTE0U5tgK7d9GLFU9KivA8HVh6EDhulSR4iz7yY=
+github.com/disgoorg/godave v0.0.0-20260101154543-2b1097f939f6/go.mod h1:k9wDox+sdz9bCxYU/TG1R2vbeZ/5kjdnDJ3zPEkkLJ8=
+github.com/disgoorg/godave/libdave v0.0.0-20260101154543-2b1097f939f6 h1:/Do0KMf1cIj1O3IAfeUi/QuKMulCwC5zY6j7fUd9lQA=
+github.com/disgoorg/godave/libdave v0.0.0-20260101154543-2b1097f939f6/go.mod h1:CxundbQ722MpK3vD31kaOAxbu1+cFnnEKQDqQ7rpxEM=
 github.com/disgoorg/snowflake/v2 v2.0.3 h1:3B+PpFjr7j4ad7oeJu4RlQ+nYOTadsKapJIzgvSI2Ro=
 github.com/disgoorg/snowflake/v2 v2.0.3/go.mod h1:W6r7NUA7DwfZLwr00km6G4UnZ0zcoLBRufhkFWgAc4c=
