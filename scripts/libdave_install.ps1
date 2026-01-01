@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 # Check Dependencies
-$requiredCmds = @("git", "cmake")
+$requiredCmds = @("git", "make", "cmake")
 foreach ($cmd in $requiredCmds) {
     if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
         Write-Error "Error: $cmd is not installed. Please install it and try again."
@@ -32,7 +32,7 @@ git submodule update --init --recursive
 .\vcpkg\bootstrap-vcpkg.bat -disableMetrics
 
 Write-Host "-> Building shared library"
-cmake --build build --target libdave
+make shared
 
 Write-Host "-> Installing files"
 if (-not (Test-Path $LIB_DIR)) { New-Item -ItemType Directory -Path $LIB_DIR }
