@@ -1,11 +1,13 @@
 package godave
 
 import (
+	"log/slog"
+
 	"github.com/disgoorg/snowflake/v2"
 )
 
 // SessionCreate is an agnostic function type for creating DAVE sessions.
-type SessionCreate func(userID snowflake.ID, callbacks Callbacks) Session
+type SessionCreate func(logger *slog.Logger, userID snowflake.ID, callbacks Callbacks) Session
 
 // Callbacks represents the callbacks used by a DAVE session to send messages back to the voice gateway.
 type Callbacks interface {
