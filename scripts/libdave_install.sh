@@ -6,16 +6,10 @@ LIBDAVE_REPO=https://github.com/discord/libdave
 LIBDAVE_SHA=74979cb33febf4ddef0c2b66e57520b339550c17
 
 # Determine OS
-OS_TYPE=$(uname -s)
-case "$OS_TYPE" in
-    Linux*)     PLATFORM=linux;;
-    Darwin*)    PLATFORM=macos;;
-    *)          PLATFORM=unknown;;
-esac
-
-if [ "$PLATFORM" == "unknown" ]; then
-    echo "Error: Unsupported operating system: $OS_TYPE"
-    exit 1
+if [[ "$(uname -s)" == "darwin"* ]]; then
+  PLATFORM=macos
+else
+  PLATFORM=linux
 fi
 
 # Dependencies
