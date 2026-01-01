@@ -53,7 +53,7 @@ setup the appropriate `pkg-config` file and configuration to allow for discovery
 
 ## Example Usage
 
-For an example of how to use GoDave, please refer to the [here](https://github.com/disgoorg/disgo/tree/feature/dave/_examples/voice)
+For an example of how to use GoDave, please see [here](https://github.com/disgoorg/disgo/tree/feature/dave/_examples/voice)
 
 ## License
 
