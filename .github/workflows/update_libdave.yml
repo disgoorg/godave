@@ -87,7 +87,8 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     env:
-      LIBDAVE_REPO: "https://github.com/discord/libdave"
+      #LIBDAVE_REPO: "https://github.com/discord/libdave"
+      LIBDAVE_REPO: "https://github.com/MinnDevelopment/libdave"
       CFLAGS: "-static -O2 ${{ matrix.extra_flags }}"
       CXXFLAGS: "-static -O2 ${{ matrix.extra_flags }}"
     defaults:
