@@ -16,7 +16,7 @@ GoDave is a library that provides Go bindings for [libdave](https://github.com/d
 2. [Installation Script (Recommended)](#installation-script-recommended)
 3. [Manual Build](#manual-build)
 4. [Example Usage](#example-usage)
-4. [License](#license)]()
+5. [License](#license)
 
 ## Libdave Installation
 
