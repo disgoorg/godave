@@ -1,6 +1,6 @@
 module github.com/disgoorg/godave
 
-go 1.25.5
+go 1.24.0
 
 // FIXME: This needs to be removed
 replace github.com/disgoorg/disgo => ../disgo
