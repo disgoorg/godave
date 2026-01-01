@@ -2,7 +2,7 @@ package libdave
 
 // #include <stdlib.h>
 // #include "dave.h"
-// extern void disdaveGlobalFailureCallback(char* source, char* reason);
+// extern void libdaveGlobalFailureCallback(char* source, char* reason);
 import "C"
 import (
 	"log/slog"
@@ -16,9 +16,9 @@ type Session struct {
 	handle sessionHandle
 }
 
-//export disdaveGlobalFailureCallback
-func disdaveGlobalFailureCallback(source *C.char, reason *C.char) {
-	globalLogger.Error(C.GoString(reason), slog.String("source", C.GoString(source)))
+//export libdaveGlobalFailureCallback
+func libdaveGlobalFailureCallback(source *C.char, reason *C.char) {
+	defaultLogger.Load().Error(C.GoString(reason), slog.String("source", C.GoString(source)))
 }
 
 func NewSession(context string, authSessionID string) *Session {
@@ -28,7 +28,7 @@ func NewSession(context string, authSessionID string) *Session {
 	cAuthSessionID := C.CString(authSessionID)
 	defer C.free(unsafe.Pointer(cAuthSessionID))
 
-	session := &Session{handle: C.daveSessionCreate(unsafe.Pointer(cContext), cAuthSessionID, C.DAVEMLSFailureCallback(unsafe.Pointer(C.disdaveGlobalFailureCallback)))}
+	session := &Session{handle: C.daveSessionCreate(unsafe.Pointer(cContext), cAuthSessionID, C.DAVEMLSFailureCallback(unsafe.Pointer(C.libdaveGlobalFailureCallback)))}
 
 	runtime.SetFinalizer(session, func(e *Session) {
 		C.daveSessionDestroy(e.handle)
