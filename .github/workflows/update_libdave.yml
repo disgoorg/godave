@@ -10,6 +10,10 @@ permissions:
   contents: write
   pull-requests: write
 
+env:
+  #LIBDAVE_REPO: "https://github.com/discord/libdave"
+  LIBDAVE_REPO: "https://github.com/MinnDevelopment/libdave"
+
 jobs:
   check-version:
     runs-on: ubuntu-latest
@@ -87,10 +91,8 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     env:
-      #LIBDAVE_REPO: "https://github.com/discord/libdave"
-      LIBDAVE_REPO: "https://github.com/MinnDevelopment/libdave"
-      CFLAGS: "-static -O2 ${{ matrix.extra_flags }}"
-      CXXFLAGS: "-static -O2 ${{ matrix.extra_flags }}"
+      CFLAGS: "-O2 ${{ matrix.extra_flags }}"
+      CXXFLAGS: "-O2 ${{ matrix.extra_flags }}"
     defaults:
       run:
         shell: bash
@@ -152,8 +154,6 @@ jobs:
   create-pr:
     needs: [check-version, build-artifacts]
     runs-on: ubuntu-latest
-    env:
-      LIBDAVE_REPO: "https://github.com/discord/libdave"
     steps:
       - uses: actions/checkout@v4
 
