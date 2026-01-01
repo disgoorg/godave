@@ -1,16 +1,13 @@
 package libdave
 
-import "C"
-import (
-	"context"
-	"log/slog"
-	"unsafe"
-)
-
 // #cgo pkg-config: dave
 // #include "dave.h"
 // extern void godaveGlobalLogCallback(DAVELoggingSeverity severity, char* file, int line, char* message);
 import "C"
+import (
+	"log/slog"
+	"unsafe"
+)
 
 var globalLogger = slog.Default().With("name", "libdave")
 

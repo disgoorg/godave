@@ -96,9 +96,10 @@ func (e *Encryptor) Encrypt(mediaType MediaType, ssrc uint32, frame []byte) ([]b
 	return outBuf[:bytesWritten], nil
 }
 
-func (e *Encryptor) SetProtocolVersionChangedCallback() {
-	panic("TODO")
-}
+// FIXME: Implement
+//func (e *Encryptor) SetProtocolVersionChangedCallback() {
+//	panic("TODO")
+//}
 
 func (e *Encryptor) GetStats(mediaType MediaType) *EncryptorStats {
 	var cStats C.DAVEEncryptorStats

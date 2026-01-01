@@ -2,9 +2,6 @@ module github.com/disgoorg/godave
 
 go 1.24.0
 
-// FIXME: This needs to be removed
-replace github.com/disgoorg/disgo => ../disgo
-
 require (
 	github.com/disgoorg/disgo v0.19.0-rc14
 	github.com/disgoorg/snowflake/v2 v2.0.3

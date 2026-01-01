@@ -107,5 +107,3 @@ func (d *Decryptor) GetStats(mediaType MediaType) *DecryptorStats {
 		DecryptInvalidNonceCount: uint64(cStats.decryptInvalidNonceCount),
 	}
 }
-
-// FIXME: daveEncryptorSetProtocolVersionChangedCallback
