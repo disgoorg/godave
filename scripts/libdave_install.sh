@@ -13,7 +13,7 @@ else
 fi
 
 # Dependencies
-REQUIRED_CMDS=("git" "make" "cmake")
+REQUIRED_CMDS=("git" "make" "cmake" "curl" "zip")
 for cmd in "${REQUIRED_CMDS[@]}"; do
   if ! command -v "$cmd" &> /dev/null; then
     echo "Error: $cmd is not installed."
