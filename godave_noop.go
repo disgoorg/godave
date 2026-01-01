@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	_ SessionCreate = NewNoopSession
-	_ Session       = (*noopSession)(nil)
+	_ SessionCreateFunc = NewNoopSession
+	_ Session           = (*noopSession)(nil)
 )
 
 func NewNoopSession(logger *slog.Logger, _ snowflake.ID, _ Callbacks) Session {

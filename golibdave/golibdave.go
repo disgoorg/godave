@@ -17,10 +17,11 @@ const (
 )
 
 var (
-	_ godave.SessionCreate = NewSession
-	_ godave.Session       = (*Session)(nil)
+	_ godave.SessionCreateFunc = NewSession
+	_ godave.Session           = (*Session)(nil)
 )
 
+// NewSession returns a new DAVE session using libdave.
 func NewSession(logger *slog.Logger, selfUserID snowflake.ID, callbacks godave.Callbacks) godave.Session {
 	encryptor := libdave.NewEncryptor()
 	// Start in Passthrough by default
