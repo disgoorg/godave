@@ -138,7 +138,7 @@ jobs:
 
           cp "build/libdave.$EXTENSION" "staging/libdave_${{ matrix.arch }}.$EXTENSION"
 
-          if [ "${{ matrix.os }}" == "ubuntu-latest" ] && [ "${{ matrix.arch }}" == "amd64" ]; then
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ] && [ "${{ matrix.arch }}" == "x86-64" ]; then
              cp includes/dave.h staging/dave.h
           fi
 
