@@ -5,18 +5,26 @@ package libdave
 // extern void godaveGlobalLogCallback(DAVELoggingSeverity severity, char* file, int line, char* message);
 import "C"
 import (
+	"context"
 	"log/slog"
+	"sync/atomic"
 	"unsafe"
 )
 
-var globalLogger = slog.Default().With("name", "libdave")
+var defaultLogger atomic.Pointer[slog.Logger]
+
+func init() {
+	defaultLogger.Store(slog.Default().With("name", "libdave"))
+
+	C.daveSetLogSinkCallback(C.DAVELogSinkCallback(unsafe.Pointer(C.godaveGlobalLogCallback)))
+}
 
 func MaxSupportedProtocolVersion() uint16 {
 	return uint16(C.daveMaxSupportedProtocolVersion())
 }
 
-func SetLogger(logger *slog.Logger) {
-	globalLogger = logger
+func SetDefault(logger *slog.Logger) {
+	defaultLogger.Store(logger)
 }
 
 //export godaveGlobalLogCallback
@@ -35,9 +43,5 @@ func godaveGlobalLogCallback(severity C.DAVELoggingSeverity, file *C.char, line 
 		return
 	}
 
-	globalLogger.Log(context.Background(), slogSeverity, C.GoString(message), slog.String("file", C.GoString(file)), slog.Int("line", int(line)))
-}
-
-func init() {
-	C.daveSetLogSinkCallback(C.DAVELogSinkCallback(unsafe.Pointer(C.godaveGlobalLogCallback)))
+	defaultLogger.Load().Log(context.Background(), slogSeverity, C.GoString(message), slog.String("file", C.GoString(file)), slog.Int("line", int(line)))
 }
