@@ -88,8 +88,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       LIBDAVE_REPO: "https://github.com/discord/libdave"
-      CFLAGS: "-static -O3 ${{ matrix.extra_flags }}"
-      CXXFLAGS: "-static -O3 ${{ matrix.extra_flags }}"
+      CFLAGS: "-O2 ${{ matrix.extra_flags }}"
+      CXXFLAGS: "-O2 ${{ matrix.extra_flags }}"
     defaults:
       run:
         shell: bash
@@ -102,7 +102,7 @@ jobs:
       - name: Setup libdave repo
         run: |
           git clone "$LIBDAVE_REPO" libdave
-          cd libdave
+          cd libdave/cpp
 
           git submodule update --init --recursive
 
