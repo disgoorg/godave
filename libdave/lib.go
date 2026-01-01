@@ -1,4 +1,3 @@
-//go:generate
 package libdave
 
 import "C"
@@ -8,7 +7,16 @@ import (
 	"unsafe"
 )
 
-// #cgo pkg-config: dave
+//// #cgo linux,386  LDFLAGS: -L${SRCDIR}/build/linux -ldave_x86
+// #cgo linux,amd64  LDFLAGS: -L${SRCDIR}/build/linux -ldave_x86-64
+// #cgo linux,arm64  LDFLAGS: -L${SRCDIR}/build/linux -ldave_aarch64
+//
+// #cgo darwin,amd64  LDFLAGS: -L${SRCDIR}/build/darwin -ldave_x86-64
+// #cgo darwin,arm64  LDFLAGS: -L${SRCDIR}/build/darwin -ldave_aarch64e
+//
+//// #cgo windows,386 LDFLAGS: -L${SRCDIR}/build/windows -ldave_x86
+//// #cgo windows,amd64 LDFLAGS: -L${SRCDIR}/build/windows -ldave_x86-64
+//// #cgo windows,arm64 LDFLAGS: -L${SRCDIR}/build/windows -ldave_aarch64
 // #include "dave.h"
 // extern void godaveGlobalLogCallback(DAVELoggingSeverity severity, char* file, int line, char* message);
 import "C"

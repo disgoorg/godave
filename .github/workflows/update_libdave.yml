@@ -57,11 +57,11 @@ jobs:
       matrix:
         include:
           # Linux
-          - os: ubuntu-latest
-            arch: x86
-            platform: linux
-            install_cmd: sudo apt-get update && sudo apt-get install -y gcc-multilib g++-multilib
-            extra_flags: "-m32"
+#          - os: ubuntu-latest
+#            arch: x86
+#            platform: linux
+#            install_cmd: sudo apt-get update && sudo apt-get install -y gcc-multilib g++-multilib
+#            extra_flags: "-m32"
           - os: ubuntu-latest
             arch: x86-64
             platform: linux
@@ -78,16 +78,16 @@ jobs:
             platform: darwin
 
           # Windows
-          - os: windows-latest
-            arch: x86
-            platform: windows
-            extra_flags: "-m32"
-          - os: windows-latest
-            arch: amd64
-            platform: windows
-          - os: windows-11-arm
-            arch: aarch64
-            platform: linux
+#          - os: windows-latest
+#            arch: x86
+#            platform: windows
+#            extra_flags: "-m32"
+#          - os: windows-latest
+#            arch: amd64
+#            platform: windows
+#          - os: windows-11-arm
+#            arch: aarch64
+#            platform: linux
 
     runs-on: ${{ matrix.os }}
     env:
