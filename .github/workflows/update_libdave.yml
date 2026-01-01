@@ -171,7 +171,7 @@ jobs:
 
           process_artifacts() {
             platform=$1
-            dest_dir="libdave/lib/build/$platform"
+            dest_dir="libdave/lib/$platform"
           
             # Find and move files for this platform
             find downloaded_artifacts -name "*$platform*" -type f \( -name "*.so" -o -name "*.dylib" -o -name "*.dll" \) -exec cp {} "$dest_dir/" \;
@@ -186,7 +186,7 @@ jobs:
           echo "${{ needs.check_version.outputs.latest_sha }}" > ${{ env.TARGET_SHA_FILE }}
 
           echo "Generating SHA256 checksums..."
-          find libdave/lib/build -type f \( -name "*.so" -o -name "*.dylib" -o -name "*.dll" \) -exec sha256sum {} + > libdave/lib/sha256.txt
+          find libdave/lib -type f \( -name "*.so" -o -name "*.dylib" -o -name "*.dll" \) -exec sha256sum {} + > libdave/lib/sha256.txt
           
           rm -rf downloaded_artifacts
 
