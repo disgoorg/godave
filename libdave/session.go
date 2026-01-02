@@ -28,56 +28,64 @@ func NewSession(context string, authSessionID string) *Session {
 	cAuthSessionID := C.CString(authSessionID)
 	defer C.free(unsafe.Pointer(cAuthSessionID))
 
-	session := &Session{handle: C.daveSessionCreate(unsafe.Pointer(cContext), cAuthSessionID, C.DAVEMLSFailureCallback(unsafe.Pointer(C.libdaveGlobalFailureCallback)))}
+	session := &Session{
+		handle: C.daveSessionCreate(
+			unsafe.Pointer(cContext),
+			cAuthSessionID,
+			C.DAVEMLSFailureCallback(unsafe.Pointer(C.libdaveGlobalFailureCallback)),
+		),
+	}
 
-	runtime.SetFinalizer(session, func(e *Session) {
-		C.daveSessionDestroy(e.handle)
-	})
+	runtime.AddCleanup(session, func(handle sessionHandle) {
+		C.daveSessionDestroy(handle)
+	}, session.handle)
 
 	return session
 }
 
-func (session *Session) Init(version uint16, channelID uint64, selfUserID string) {
+func (s *Session) Init(version uint16, channelID uint64, selfUserID string) {
 	cSelfUserID := C.CString(selfUserID)
 	defer C.free(unsafe.Pointer(cSelfUserID))
 
-	C.daveSessionInit(session.handle, C.uint16_t(version), C.uint64_t(channelID), cSelfUserID)
+	C.daveSessionInit(s.handle, C.uint16_t(version), C.uint64_t(channelID), cSelfUserID)
 }
 
-func (session *Session) Reset() {
-	C.daveSessionReset(session.handle)
+func (s *Session) Reset() {
+	C.daveSessionReset(s.handle)
 }
 
-func (session *Session) SetProtocolVersion(version uint16) {
-	C.daveSessionSetProtocolVersion(session.handle, C.uint16_t(version))
+func (s *Session) SetProtocolVersion(version uint16) {
+	C.daveSessionSetProtocolVersion(s.handle, C.uint16_t(version))
 }
 
-func (session *Session) GetProtocolVersion() uint16 {
-	return uint16(C.daveSessionGetProtocolVersion(session.handle))
+func (s *Session) GetProtocolVersion() uint16 {
+	return uint16(C.daveSessionGetProtocolVersion(s.handle))
 }
 
-func (session *Session) GetLastEpochAuthenticator() []byte {
-	var authenticator *C.uint8_t
-	var authenticatorLen C.size_t
-
-	C.daveSessionGetLastEpochAuthenticator(session.handle, &authenticator, &authenticatorLen)
+func (s *Session) GetLastEpochAuthenticator() []byte {
+	var (
+		authenticator    *C.uint8_t
+		authenticatorLen C.size_t
+	)
+	C.daveSessionGetLastEpochAuthenticator(s.handle, &authenticator, &authenticatorLen)
 
 	return newCBytesMemoryView(authenticator, authenticatorLen)
 }
 
-func (session *Session) SetExternalSender(externalSender []byte) {
-	C.daveSessionSetExternalSender(session.handle, (*C.uint8_t)(unsafe.Pointer(&externalSender[0])), C.size_t(len(externalSender)))
+func (s *Session) SetExternalSender(externalSender []byte) {
+	C.daveSessionSetExternalSender(s.handle, (*C.uint8_t)(unsafe.Pointer(&externalSender[0])), C.size_t(len(externalSender)))
 }
 
-func (session *Session) ProcessProposals(proposals []byte, recognizedUserIDs []string) []byte {
+func (s *Session) ProcessProposals(proposals []byte, recognizedUserIDs []string) []byte {
 	cRecognizedUserIDs, free := stringSliceToC(recognizedUserIDs)
 	defer free()
 
-	var welcomeBytes *C.uint8_t
-	var welcomeBytesLen C.size_t
-
+	var (
+		welcomeBytes    *C.uint8_t
+		welcomeBytesLen C.size_t
+	)
 	C.daveSessionProcessProposals(
-		session.handle,
+		s.handle,
 		(*C.uint8_t)(unsafe.Pointer(&proposals[0])),
 		C.size_t(len(proposals)),
 		cRecognizedUserIDs,
@@ -89,44 +97,38 @@ func (session *Session) ProcessProposals(proposals []byte, recognizedUserIDs []s
 	return newCBytesMemoryView(welcomeBytes, welcomeBytesLen)
 }
 
-func (session *Session) ProcessCommit(commit []byte) *CommitResult {
-	var res C.DAVECommitResultHandle
-
-	res = C.daveSessionProcessCommit(session.handle, (*C.uint8_t)(unsafe.Pointer(&commit[0])), C.size_t(len(commit)))
-
-	return newCommitResult(res)
+func (s *Session) ProcessCommit(commit []byte) *CommitResult {
+	return newCommitResult(C.daveSessionProcessCommit(s.handle, (*C.uint8_t)(unsafe.Pointer(&commit[0])), C.size_t(len(commit))))
 }
 
-func (session *Session) ProcessWelcome(welcome []byte, recognizedUserIDs []string) *WelcomeResult {
+func (s *Session) ProcessWelcome(welcome []byte, recognizedUserIDs []string) *WelcomeResult {
 	cRecognizedUserIDs, free := stringSliceToC(recognizedUserIDs)
 	defer free()
 
-	var handle C.DAVEWelcomeResultHandle
-	handle = C.daveSessionProcessWelcome(
-		session.handle,
+	return newWelcomeResult(C.daveSessionProcessWelcome(
+		s.handle,
 		(*C.uint8_t)(unsafe.Pointer(&welcome[0])),
 		C.size_t(len(welcome)),
 		cRecognizedUserIDs,
 		C.size_t(len(recognizedUserIDs)),
-	)
-
-	return newWelcomeResult(handle)
+	))
 }
 
-func (session *Session) GetMarshalledKeyPackage() []byte {
-	var keyPackage *C.uint8_t
-	var keyPackageLen C.size_t
-
-	C.daveSessionGetMarshalledKeyPackage(session.handle, &keyPackage, &keyPackageLen)
+func (s *Session) GetMarshalledKeyPackage() []byte {
+	var (
+		keyPackage    *C.uint8_t
+		keyPackageLen C.size_t
+	)
+	C.daveSessionGetMarshalledKeyPackage(s.handle, &keyPackage, &keyPackageLen)
 
 	return newCBytesMemoryView(keyPackage, keyPackageLen)
 }
 
-func (session *Session) GetKeyRatchet(userID string) *KeyRatchet {
+func (s *Session) GetKeyRatchet(userID string) *KeyRatchet {
 	cUserID := C.CString(userID)
 	defer C.free(unsafe.Pointer(cUserID))
 
-	return newKeyRatchet(C.daveSessionGetKeyRatchet(session.handle, cUserID))
+	return newKeyRatchet(C.daveSessionGetKeyRatchet(s.handle, cUserID))
 }
 
 // FIXME: Implement using trampoline when https://github.com/discord/libdave/issues/10 is implemented

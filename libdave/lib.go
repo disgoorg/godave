@@ -14,7 +14,7 @@ import (
 var defaultLogger atomic.Pointer[slog.Logger]
 
 func init() {
-	defaultLogger.Store(slog.Default().With("name", "libdave"))
+	SetDefaultLogger(slog.Default().With("name", "libdave"))
 
 	C.daveSetLogSinkCallback(C.DAVELogSinkCallback(unsafe.Pointer(C.godaveGlobalLogCallback)))
 }
@@ -23,7 +23,7 @@ func MaxSupportedProtocolVersion() uint16 {
 	return uint16(C.daveMaxSupportedProtocolVersion())
 }
 
-func SetDefault(logger *slog.Logger) {
+func SetDefaultLogger(logger *slog.Logger) {
 	defaultLogger.Store(logger)
 }
 

@@ -2,12 +2,10 @@ package godave
 
 import (
 	"log/slog"
-
-	"github.com/disgoorg/snowflake/v2"
 )
 
 // SessionCreateFunc is an agnostic function type for creating DAVE sessions.
-type SessionCreateFunc func(logger *slog.Logger, userID snowflake.ID, callbacks Callbacks) Session
+type SessionCreateFunc func(logger *slog.Logger, userID UserID, callbacks Callbacks) Session
 
 // Callbacks represents the callbacks used by a DAVE session to send messages back to the voice gateway.
 type Callbacks interface {
@@ -21,12 +19,16 @@ type Callbacks interface {
 	SendInvalidCommitWelcome(transitionID uint16) error
 }
 
+type UserID string
+
+type ChannelID uint64
+
 // Codec represents an audio codec used in the DAVE protocol.
 type Codec int
 
 const (
 	// CodecOpus represents the OPUS audio codec.
-	CodecOpus Codec = iota + 1
+	CodecOpus Codec = 1
 )
 
 // Session is an interface representing a DAVE session.
@@ -36,7 +38,7 @@ type Session interface {
 	MaxSupportedProtocolVersion() int
 
 	// SetChannelID sets the channel ID for this session.
-	SetChannelID(channelID snowflake.ID)
+	SetChannelID(channelID ChannelID)
 
 	// AssignSsrcToCodec maps a given SSRC to a specific Codec.
 	AssignSsrcToCodec(ssrc uint32, codec Codec)
@@ -45,13 +47,13 @@ type Session interface {
 	Encrypt(ssrc uint32, frame []byte) ([]byte, error)
 
 	// Decrypt decrypts an OPUS frame.
-	Decrypt(userID snowflake.ID, frame []byte) ([]byte, error)
+	Decrypt(userID UserID, frame []byte) ([]byte, error)
 
 	// AddUser adds a user to the MLS group.
-	AddUser(userID snowflake.ID)
+	AddUser(userID UserID)
 
 	// RemoveUser removes a use from the MLS group.
-	RemoveUser(userID snowflake.ID)
+	RemoveUser(userID UserID)
 
 	// OnSelectProtocolAck is to be called when SELECT_PROTOCOL_ACK (4) is received.
 	OnSelectProtocolAck(protocolVersion uint16)

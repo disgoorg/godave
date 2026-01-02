@@ -49,11 +49,13 @@ type Decryptor struct {
 }
 
 func NewDecryptor() *Decryptor {
-	decryptor := &Decryptor{handle: C.daveDecryptorCreate()}
+	decryptor := &Decryptor{
+		handle: C.daveDecryptorCreate(),
+	}
 
-	runtime.SetFinalizer(decryptor, func(e *Decryptor) {
-		C.daveDecryptorDestroy(e.handle)
-	})
+	runtime.AddCleanup(decryptor, func(handle decryptorHandle) {
+		C.daveDecryptorDestroy(handle)
+	}, decryptor.handle)
 
 	return decryptor
 }
@@ -66,12 +68,16 @@ func (d *Decryptor) TransitionToPassthroughMode(passthroughMode bool) {
 	C.daveDecryptorTransitionToPassthroughMode(d.handle, C.bool(passthroughMode))
 }
 
+func (d *Decryptor) GetMaxPlaintextByteSize(mediaType MediaType, encryptedFrameSize int) int {
+	return int(C.daveDecryptorGetMaxPlaintextByteSize(d.handle, C.DAVEMediaType(mediaType), C.size_t(encryptedFrameSize)))
+}
+
 func (d *Decryptor) Decrypt(mediaType MediaType, encryptedFrame []byte) ([]byte, error) {
-	capacity := C.daveDecryptorGetMaxPlaintextByteSize(d.handle, C.DAVEMediaType(mediaType), C.size_t(len(encryptedFrame)))
+	capacity := d.GetMaxPlaintextByteSize(mediaType, len(encryptedFrame))
 	outBuf := make([]byte, capacity)
 
 	var bytesWritten C.size_t
-	res := decryptorResultCode(C.daveDecryptorDecrypt(
+	if res := decryptorResultCode(C.daveDecryptorDecrypt(
 		d.handle,
 		C.DAVEMediaType(mediaType),
 		(*C.uint8_t)(unsafe.Pointer(&encryptedFrame[0])),
@@ -79,24 +85,17 @@ func (d *Decryptor) Decrypt(mediaType MediaType, encryptedFrame []byte) ([]byte,
 		(*C.uint8_t)(unsafe.Pointer(&outBuf[0])),
 		capacity,
 		&bytesWritten,
-	))
-
-	if res != decryptorResultCodeSuccess {
+	)); res != decryptorResultCodeSuccess {
 		return nil, res.ToError()
 	}
 
 	return outBuf[:bytesWritten], nil
 }
 
-func (d *Decryptor) GetMaxPlaintextByteSize(mediaType MediaType, encryptedFrameSize int) int {
-	var res C.size_t
-	res = C.daveDecryptorGetMaxPlaintextByteSize(d.handle, C.DAVEMediaType(mediaType), C.size_t(encryptedFrameSize))
-	return int(res)
-}
-
 func (d *Decryptor) GetStats(mediaType MediaType) *DecryptorStats {
 	var cStats C.DAVEDecryptorStats
 	C.daveDecryptorGetStats(d.handle, C.DAVEMediaType(mediaType), &cStats)
+
 	return &DecryptorStats{
 		PassthroughCount:         uint64(cStats.passthroughCount),
 		DecryptSuccessCount:      uint64(cStats.decryptSuccessCount),

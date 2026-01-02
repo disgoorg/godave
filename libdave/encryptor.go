@@ -42,9 +42,9 @@ type Encryptor struct {
 func NewEncryptor() *Encryptor {
 	encryptor := &Encryptor{handle: C.daveEncryptorCreate()}
 
-	runtime.SetFinalizer(encryptor, func(e *Encryptor) {
-		C.daveEncryptorDestroy(e.handle)
-	})
+	runtime.AddCleanup(encryptor, func(handle encryptionHandle) {
+		C.daveEncryptorDestroy(handle)
+	}, encryptor.handle)
 
 	return encryptor
 }
@@ -62,23 +62,19 @@ func (e *Encryptor) AssignSsrcToCodec(ssrc uint32, codec Codec) {
 }
 
 func (e *Encryptor) GetProtocolVersion() uint16 {
-	var res C.uint16_t
-	res = C.daveEncryptorGetProtocolVersion(e.handle)
-	return uint16(res)
+	return uint16(C.daveEncryptorGetProtocolVersion(e.handle))
 }
 
 func (e *Encryptor) GetMaxCiphertextByteSize(mediaType MediaType, frameSize int) int {
-	var res C.size_t
-	res = C.daveEncryptorGetMaxCiphertextByteSize(e.handle, C.DAVEMediaType(mediaType), C.size_t(frameSize))
-	return int(res)
+	return int(C.daveEncryptorGetMaxCiphertextByteSize(e.handle, C.DAVEMediaType(mediaType), C.size_t(frameSize)))
 }
 
 func (e *Encryptor) Encrypt(mediaType MediaType, ssrc uint32, frame []byte) ([]byte, error) {
-	capacity := C.daveEncryptorGetMaxCiphertextByteSize(e.handle, C.DAVEMediaType(mediaType), C.size_t(len(frame)))
+	capacity := e.GetMaxCiphertextByteSize(mediaType, len(frame))
 	outBuf := make([]byte, capacity)
 
 	var bytesWritten C.size_t
-	res := encryptorResultCode(C.daveEncryptorEncrypt(
+	if res := encryptorResultCode(C.daveEncryptorEncrypt(
 		e.handle,
 		C.DAVEMediaType(mediaType),
 		C.uint32_t(ssrc),
@@ -87,9 +83,7 @@ func (e *Encryptor) Encrypt(mediaType MediaType, ssrc uint32, frame []byte) ([]b
 		(*C.uint8_t)(unsafe.Pointer(&outBuf[0])),
 		capacity,
 		&bytesWritten,
-	))
-
-	if res != encryptorResultCodeSuccess {
+	)); res != encryptorResultCodeSuccess {
 		return nil, res.ToError()
 	}
 
@@ -97,13 +91,14 @@ func (e *Encryptor) Encrypt(mediaType MediaType, ssrc uint32, frame []byte) ([]b
 }
 
 // FIXME: Implement
-//func (e *Encryptor) SetProtocolVersionChangedCallback() {
+// func (e *Encryptor) SetProtocolVersionChangedCallback() {
 //	panic("TODO")
-//}
+// }
 
 func (e *Encryptor) GetStats(mediaType MediaType) *EncryptorStats {
 	var cStats C.DAVEEncryptorStats
 	C.daveEncryptorGetStats(e.handle, C.DAVEMediaType(mediaType), &cStats)
+
 	return &EncryptorStats{
 		PassthroughCount:       uint64(cStats.passthroughCount),
 		EncryptSuccessCount:    uint64(cStats.encryptSuccessCount),

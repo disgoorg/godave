@@ -11,11 +11,13 @@ type CommitResult struct {
 }
 
 func newCommitResult(handle commitResultHandle) *CommitResult {
-	commitResult := &CommitResult{handle: handle}
+	commitResult := &CommitResult{
+		handle: handle,
+	}
 
-	runtime.SetFinalizer(commitResult, func(commitResult *CommitResult) {
-		C.daveCommitResultDestroy(commitResult.handle)
-	})
+	runtime.AddCleanup(commitResult, func(handle commitResultHandle) {
+		C.daveCommitResultDestroy(handle)
+	}, commitResult.handle)
 
 	return commitResult
 }
@@ -29,18 +31,20 @@ func (r *CommitResult) IsIgnored() bool {
 }
 
 func (r *CommitResult) GetRosterMemberIDs() []uint64 {
-	var rosterIDs *C.uint64_t
-	var rosterIDsLength C.size_t
-
+	var (
+		rosterIDs       *C.uint64_t
+		rosterIDsLength C.size_t
+	)
 	C.daveCommitResultGetRosterMemberIds(r.handle, &rosterIDs, &rosterIDsLength)
 
 	return newCUint64MemoryView(rosterIDs, rosterIDsLength)
 }
 
 func (r *CommitResult) GetRosterMemberSignature(rosterID uint64) []byte {
-	var rosterMemberSignature *C.uint8_t
-	var rosterMemberSignatureLength C.size_t
-
+	var (
+		rosterMemberSignature       *C.uint8_t
+		rosterMemberSignatureLength C.size_t
+	)
 	C.daveCommitResultGetRosterMemberSignature(r.handle, C.uint64_t(rosterID), &rosterMemberSignature, &rosterMemberSignatureLength)
 
 	return newCBytesMemoryView(rosterMemberSignature, rosterMemberSignatureLength)
