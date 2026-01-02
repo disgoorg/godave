@@ -1,4 +1,4 @@
-github.com/disgoorg/godave v0.0.0-20260102161318-1deaacc1cf84 h1:i2WU8kzhhlIVX73is3mMftsuq7GCXf7vdgPF1E4ywLg=
-github.com/disgoorg/godave v0.0.0-20260102161318-1deaacc1cf84/go.mod h1:OreAC3hpabr39bMVA+jwOVDq1EUPXH5A0XUBiZaDI1Y=
-github.com/disgoorg/godave/libdave v0.0.0-20260102161318-1deaacc1cf84 h1:wmc54XakXDPLtppb8BEQhQM/O11VsggrqL8j1hVL1g0=
-github.com/disgoorg/godave/libdave v0.0.0-20260102161318-1deaacc1cf84/go.mod h1:CxundbQ722MpK3vD31kaOAxbu1+cFnnEKQDqQ7rpxEM=
+github.com/disgoorg/godave v0.0.0-20260102170127-51d12688c6e8 h1:YvmStxJhw35AzkIoGjgSxxBaNRdQuavSUcidaNsMIe0=
+github.com/disgoorg/godave v0.0.0-20260102170127-51d12688c6e8/go.mod h1:OreAC3hpabr39bMVA+jwOVDq1EUPXH5A0XUBiZaDI1Y=
+github.com/disgoorg/godave/libdave v0.0.0-20260102170127-51d12688c6e8 h1:oj7FhFSgKg+d1SnLB1gKHd/T8WvLXTwCMa1rZTp2Qlw=
+github.com/disgoorg/godave/libdave v0.0.0-20260102170127-51d12688c6e8/go.mod h1:CxundbQ722MpK3vD31kaOAxbu1+cFnnEKQDqQ7rpxEM=
