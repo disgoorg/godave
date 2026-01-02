@@ -59,17 +59,30 @@ func (s *Session) AssignSsrcToCodec(ssrc uint32, codec godave.Codec) {
 	s.encryptor.AssignSsrcToCodec(ssrc, libdave.Codec(codec))
 }
 
-func (s *Session) Encrypt(ssrc uint32, frame []byte) ([]byte, error) {
-	return s.encryptor.Encrypt(libdave.MediaTypeAudio, ssrc, frame)
+func (s *Session) MaxEncryptedFrameSize(frameSize int) int {
+	return s.encryptor.GetMaxCiphertextByteSize(libdave.MediaTypeAudio, frameSize)
 }
 
-func (s *Session) Decrypt(userID godave.UserID, frame []byte) ([]byte, error) {
+func (s *Session) Encrypt(ssrc uint32, frame []byte, encryptedFrame []byte) (int, error) {
+	return s.encryptor.Encrypt(libdave.MediaTypeAudio, ssrc, frame, encryptedFrame)
+}
+
+func (s *Session) MaxDecryptedFrameSize(userID godave.UserID, frameSize int) int {
 	if decryptor, ok := s.decryptors[userID]; ok {
-		return decryptor.Decrypt(libdave.MediaTypeAudio, frame)
+		return decryptor.GetMaxPlaintextByteSize(libdave.MediaTypeAudio, frameSize)
 	}
 
-	// Assume passthrough
-	return frame, nil
+	// assume passthrough
+	return frameSize
+}
+
+func (s *Session) Decrypt(userID godave.UserID, frame []byte, decryptedFrame []byte) (int, error) {
+	if decryptor, ok := s.decryptors[userID]; ok {
+		return decryptor.Decrypt(libdave.MediaTypeAudio, frame, decryptedFrame)
+	}
+
+	// assume passthrough
+	return copy(frame, decryptedFrame), nil
 }
 
 func (s *Session) AddUser(userID godave.UserID) {
