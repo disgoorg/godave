@@ -3,10 +3,7 @@ package golibdave
 import (
 	"log/slog"
 
-	"github.com/disgoorg/snowflake/v2"
-
 	"github.com/disgoorg/godave"
-
 	"github.com/disgoorg/godave/libdave"
 )
 
@@ -22,7 +19,7 @@ var (
 )
 
 // NewSession returns a new DAVE session using libdave.
-func NewSession(logger *slog.Logger, selfUserID snowflake.ID, callbacks godave.Callbacks) godave.Session {
+func NewSession(logger *slog.Logger, selfUserID godave.UserID, callbacks godave.Callbacks) godave.Session {
 	encryptor := libdave.NewEncryptor()
 	// Start in Passthrough by default
 	encryptor.SetPassthroughMode(true)
@@ -34,40 +31,40 @@ func NewSession(logger *slog.Logger, selfUserID snowflake.ID, callbacks godave.C
 		// Context and authSessionID are only used with persistent key storage and can be ignored most of the time
 		session:             libdave.NewSession("", ""),
 		encryptor:           encryptor,
-		decryptors:          make(map[snowflake.ID]*libdave.Decryptor),
+		decryptors:          make(map[godave.UserID]*libdave.Decryptor),
 		preparedTransitions: make(map[uint16]uint16),
 	}
 }
 
 type Session struct {
-	selfUserID          snowflake.ID
-	channelID           snowflake.ID
+	selfUserID          godave.UserID
+	channelID           godave.ChannelID
 	logger              *slog.Logger
 	callbacks           godave.Callbacks
 	session             *libdave.Session
 	encryptor           *libdave.Encryptor
-	decryptors          map[snowflake.ID]*libdave.Decryptor
+	decryptors          map[godave.UserID]*libdave.Decryptor
 	preparedTransitions map[uint16]uint16
 }
 
-func (m *Session) MaxSupportedProtocolVersion() int {
+func (s *Session) MaxSupportedProtocolVersion() int {
 	return int(libdave.MaxSupportedProtocolVersion())
 }
 
-func (m *Session) SetChannelID(channelID snowflake.ID) {
-	m.channelID = channelID
+func (s *Session) SetChannelID(channelID godave.ChannelID) {
+	s.channelID = channelID
 }
 
-func (m *Session) AssignSsrcToCodec(ssrc uint32, codec godave.Codec) {
-	m.encryptor.AssignSsrcToCodec(ssrc, libdave.Codec(codec))
+func (s *Session) AssignSsrcToCodec(ssrc uint32, codec godave.Codec) {
+	s.encryptor.AssignSsrcToCodec(ssrc, libdave.Codec(codec))
 }
 
-func (m *Session) Encrypt(ssrc uint32, frame []byte) ([]byte, error) {
-	return m.encryptor.Encrypt(libdave.MediaTypeAudio, ssrc, frame)
+func (s *Session) Encrypt(ssrc uint32, frame []byte) ([]byte, error) {
+	return s.encryptor.Encrypt(libdave.MediaTypeAudio, ssrc, frame)
 }
 
-func (m *Session) Decrypt(userID snowflake.ID, frame []byte) ([]byte, error) {
-	if decryptor, ok := m.decryptors[userID]; ok {
+func (s *Session) Decrypt(userID godave.UserID, frame []byte) ([]byte, error) {
+	if decryptor, ok := s.decryptors[userID]; ok {
 		return decryptor.Decrypt(libdave.MediaTypeAudio, frame)
 	}
 
@@ -75,190 +72,180 @@ func (m *Session) Decrypt(userID snowflake.ID, frame []byte) ([]byte, error) {
 	return frame, nil
 }
 
-func (m *Session) AddUser(userID snowflake.ID) {
-	m.decryptors[userID] = libdave.NewDecryptor()
-	m.setupKeyRatchetForUser(userID, m.session.GetProtocolVersion())
+func (s *Session) AddUser(userID godave.UserID) {
+	s.decryptors[userID] = libdave.NewDecryptor()
+	s.setupKeyRatchetForUser(userID, s.session.GetProtocolVersion())
 }
 
-func (m *Session) RemoveUser(userID snowflake.ID) {
-	delete(m.decryptors, userID)
+func (s *Session) RemoveUser(userID godave.UserID) {
+	delete(s.decryptors, userID)
 }
 
-func (m *Session) OnSelectProtocolAck(protocolVersion uint16) {
-	m.protocolInit(protocolVersion)
+func (s *Session) OnSelectProtocolAck(protocolVersion uint16) {
+	s.protocolInit(protocolVersion)
 }
 
-func (m *Session) OnDavePrepareTransition(transitionID uint16, protocolVersion uint16) {
-	if _, ok := m.preparedTransitions[transitionID]; ok {
-
-	}
-	m.prepareTransition(transitionID, protocolVersion)
+func (s *Session) OnDavePrepareTransition(transitionID uint16, protocolVersion uint16) {
+	s.prepareTransition(transitionID, protocolVersion)
 
 	if transitionID != initTransitionId {
-		err := m.callbacks.SendReadyForTransition(transitionID)
-		if err != nil {
-			m.logger.Error("failed to send ready for transition", slog.Any("error", err))
-		}
+		s.sendReadyForTransition(transitionID)
 	}
 }
 
-func (m *Session) OnDaveExecuteTransition(transitionID uint16) {
-	m.executeTransition(transitionID)
+func (s *Session) OnDaveExecuteTransition(transitionID uint16) {
+	s.executeTransition(transitionID)
 }
 
-func (m *Session) OnDavePrepareEpoch(epoch int, protocolVersion uint16) {
-	m.prepareEpoch(epoch, protocolVersion)
+func (s *Session) OnDavePrepareEpoch(epoch int, protocolVersion uint16) {
+	s.prepareEpoch(epoch, protocolVersion)
 
 	if epoch == mlsNewGroupExpectedEpoch {
-		m.sendMLSKeyPackage()
+		s.sendMLSKeyPackage()
 	}
 }
 
-func (m *Session) OnDaveMLSExternalSenderPackage(externalSenderPackage []byte) {
-	m.session.SetExternalSender(externalSenderPackage)
+func (s *Session) OnDaveMLSExternalSenderPackage(externalSenderPackage []byte) {
+	s.session.SetExternalSender(externalSenderPackage)
 }
 
-func (m *Session) OnDaveMLSProposals(proposals []byte) {
-	commitWelcome := m.session.ProcessProposals(proposals, m.recognizedUserIDs())
+func (s *Session) OnDaveMLSProposals(proposals []byte) {
+	commitWelcome := s.session.ProcessProposals(proposals, s.recognizedUserIDs())
 
 	if commitWelcome != nil {
-		m.sendMLSCommitWelcome(commitWelcome)
+		s.sendMLSCommitWelcome(commitWelcome)
 	}
 }
 
-func (m *Session) OnDaveMLSPrepareCommitTransition(transitionID uint16, commitMessage []byte) {
-	res := m.session.ProcessCommit(commitMessage)
+func (s *Session) OnDaveMLSPrepareCommitTransition(transitionID uint16, commitMessage []byte) {
+	res := s.session.ProcessCommit(commitMessage)
 
 	if res.IsIgnored() {
 		return
 	}
 
 	if res.IsFailed() {
-		m.sendInvalidCommitWelcome(transitionID)
-		m.protocolInit(m.session.GetProtocolVersion())
+		s.sendInvalidCommitWelcome(transitionID)
+		s.protocolInit(s.session.GetProtocolVersion())
 		return
 	}
 
-	m.prepareTransition(transitionID, m.session.GetProtocolVersion())
+	s.prepareTransition(transitionID, s.session.GetProtocolVersion())
 	if transitionID != initTransitionId {
-		m.sendReadyForTransition(transitionID)
+		s.sendReadyForTransition(transitionID)
 	}
 }
 
-func (m *Session) OnDaveMLSWelcome(transitionID uint16, welcomeMessage []byte) {
-	res := m.session.ProcessWelcome(welcomeMessage, m.recognizedUserIDs())
+func (s *Session) OnDaveMLSWelcome(transitionID uint16, welcomeMessage []byte) {
+	res := s.session.ProcessWelcome(welcomeMessage, s.recognizedUserIDs())
 
 	if res == nil {
-		m.sendInvalidCommitWelcome(transitionID)
-		m.sendMLSKeyPackage()
+		s.sendInvalidCommitWelcome(transitionID)
+		s.sendMLSKeyPackage()
 		return
 	}
 
-	m.prepareTransition(transitionID, m.session.GetProtocolVersion())
+	s.prepareTransition(transitionID, s.session.GetProtocolVersion())
 	if transitionID != initTransitionId {
-		m.sendReadyForTransition(transitionID)
+		s.sendReadyForTransition(transitionID)
 	}
 }
 
-func (m *Session) recognizedUserIDs() []string {
-	userIDs := make([]string, 0, len(m.decryptors)+1)
+func (s *Session) recognizedUserIDs() []string {
+	userIDs := make([]string, 0, len(s.decryptors)+1)
 
-	userIDs = append(userIDs, m.selfUserID.String())
+	userIDs = append(userIDs, string(s.selfUserID))
 
-	for userID, _ := range m.decryptors {
-		userIDs = append(userIDs, userID.String())
+	for userID := range s.decryptors {
+		userIDs = append(userIDs, string(userID))
 	}
 
 	return userIDs
 }
 
-func (m *Session) protocolInit(protocolVersion uint16) {
+func (s *Session) protocolInit(protocolVersion uint16) {
 	if protocolVersion > disabledProtocolVersion {
-		m.prepareEpoch(mlsNewGroupExpectedEpoch, protocolVersion)
-		m.sendMLSKeyPackage()
+		s.prepareEpoch(mlsNewGroupExpectedEpoch, protocolVersion)
+		s.sendMLSKeyPackage()
 	} else {
-		m.prepareTransition(initTransitionId, protocolVersion)
-		m.executeTransition(initTransitionId)
+		s.prepareTransition(initTransitionId, protocolVersion)
+		s.executeTransition(initTransitionId)
 	}
 }
 
-func (m *Session) prepareEpoch(epoch int, protocolVersion uint16) {
+func (s *Session) prepareEpoch(epoch int, protocolVersion uint16) {
 	if epoch != mlsNewGroupExpectedEpoch {
 		return
 	}
 
-	m.session.Init(protocolVersion, uint64(m.channelID), m.selfUserID.String())
+	s.session.Init(protocolVersion, uint64(s.channelID), string(s.selfUserID))
 }
 
-func (m *Session) executeTransition(transitionID uint16) {
-	protocolVersion, ok := m.preparedTransitions[transitionID]
+func (s *Session) executeTransition(transitionID uint16) {
+	protocolVersion, ok := s.preparedTransitions[transitionID]
 	if !ok {
 		return
 	}
 
-	delete(m.preparedTransitions, transitionID)
+	delete(s.preparedTransitions, transitionID)
 
 	if protocolVersion == disabledProtocolVersion {
-		m.session.Reset()
+		s.session.Reset()
 	}
 
-	m.setupKeyRatchetForUser(m.selfUserID, protocolVersion)
+	s.setupKeyRatchetForUser(s.selfUserID, protocolVersion)
 }
 
-func (m *Session) prepareTransition(transitionID uint16, protocolVersion uint16) {
-	for userID, _ := range m.decryptors {
-		m.setupKeyRatchetForUser(userID, protocolVersion)
+func (s *Session) prepareTransition(transitionID uint16, protocolVersion uint16) {
+	for userID, _ := range s.decryptors {
+		s.setupKeyRatchetForUser(userID, protocolVersion)
 	}
 
 	if transitionID == initTransitionId {
-		m.setupKeyRatchetForUser(m.selfUserID, protocolVersion)
+		s.setupKeyRatchetForUser(s.selfUserID, protocolVersion)
 	} else {
-		m.preparedTransitions[transitionID] = protocolVersion
+		s.preparedTransitions[transitionID] = protocolVersion
 	}
 }
 
-func (m *Session) setupKeyRatchetForUser(userID snowflake.ID, protocolVersion uint16) {
+func (s *Session) setupKeyRatchetForUser(userID godave.UserID, protocolVersion uint16) {
 	disabled := protocolVersion == disabledProtocolVersion
 
-	if userID == m.selfUserID {
-		m.encryptor.SetPassthroughMode(disabled)
+	if userID == s.selfUserID {
+		s.encryptor.SetPassthroughMode(disabled)
 		if !disabled {
-			m.encryptor.SetKeyRatchet(m.session.GetKeyRatchet(userID.String()))
+			s.encryptor.SetKeyRatchet(s.session.GetKeyRatchet(string(userID)))
 		}
 		return
 	}
 
-	decryptor := m.decryptors[userID]
+	decryptor := s.decryptors[userID]
 	decryptor.TransitionToPassthroughMode(disabled)
 	if !disabled {
-		decryptor.TransitionToKeyRatchet(m.session.GetKeyRatchet(userID.String()))
+		decryptor.TransitionToKeyRatchet(s.session.GetKeyRatchet(string(userID)))
 	}
 }
 
-func (m *Session) sendMLSKeyPackage() {
-	err := m.callbacks.SendMLSKeyPackage(m.session.GetMarshalledKeyPackage())
-	if err != nil {
-		m.logger.Error("failed to send MLS key package", slog.Any("error", err))
+func (s *Session) sendMLSKeyPackage() {
+	if err := s.callbacks.SendMLSKeyPackage(s.session.GetMarshalledKeyPackage()); err != nil {
+		s.logger.Error("failed to send MLS key package", slog.Any("err", err))
 	}
 }
 
-func (m *Session) sendMLSCommitWelcome(message []byte) {
-	err := m.callbacks.SendMLSCommitWelcome(message)
-	if err != nil {
-		m.logger.Error("failed to send commit welcome", slog.Any("error", err))
+func (s *Session) sendMLSCommitWelcome(message []byte) {
+	if err := s.callbacks.SendMLSCommitWelcome(message); err != nil {
+		s.logger.Error("failed to send MLS commit welcome", slog.Any("err", err))
 	}
 }
 
-func (m *Session) sendReadyForTransition(transitionID uint16) {
-	err := m.callbacks.SendReadyForTransition(transitionID)
-	if err != nil {
-		m.logger.Error("failed to send ready for transition", slog.Any("error", err))
+func (s *Session) sendReadyForTransition(transitionID uint16) {
+	if err := s.callbacks.SendReadyForTransition(transitionID); err != nil {
+		s.logger.Error("failed to send ready for transition", slog.Any("err", err))
 	}
 }
 
-func (m *Session) sendInvalidCommitWelcome(transitionID uint16) {
-	err := m.callbacks.SendInvalidCommitWelcome(transitionID)
-	if err != nil {
-		m.logger.Error("failed to send invalid commit welcome", slog.Any("error", err))
+func (s *Session) sendInvalidCommitWelcome(transitionID uint16) {
+	if err := s.callbacks.SendInvalidCommitWelcome(transitionID); err != nil {
+		s.logger.Error("failed to send invalid commit welcome", slog.Any("err", err))
 	}
 }
