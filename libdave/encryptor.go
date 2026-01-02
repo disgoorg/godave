@@ -81,7 +81,7 @@ func (e *Encryptor) Encrypt(mediaType MediaType, ssrc uint32, frame []byte) ([]b
 		(*C.uint8_t)(unsafe.Pointer(&frame[0])),
 		C.size_t(len(frame)),
 		(*C.uint8_t)(unsafe.Pointer(&outBuf[0])),
-		capacity,
+		C.size_t(capacity),
 		&bytesWritten,
 	)); res != encryptorResultCodeSuccess {
 		return nil, res.ToError()

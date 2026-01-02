@@ -83,7 +83,7 @@ func (d *Decryptor) Decrypt(mediaType MediaType, encryptedFrame []byte) ([]byte,
 		(*C.uint8_t)(unsafe.Pointer(&encryptedFrame[0])),
 		C.size_t(len(encryptedFrame)),
 		(*C.uint8_t)(unsafe.Pointer(&outBuf[0])),
-		capacity,
+		C.size_t(capacity),
 		&bytesWritten,
 	)); res != decryptorResultCodeSuccess {
 		return nil, res.ToError()
