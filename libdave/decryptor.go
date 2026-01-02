@@ -72,24 +72,21 @@ func (d *Decryptor) GetMaxPlaintextByteSize(mediaType MediaType, encryptedFrameS
 	return int(C.daveDecryptorGetMaxPlaintextByteSize(d.handle, C.DAVEMediaType(mediaType), C.size_t(encryptedFrameSize)))
 }
 
-func (d *Decryptor) Decrypt(mediaType MediaType, encryptedFrame []byte) ([]byte, error) {
-	capacity := d.GetMaxPlaintextByteSize(mediaType, len(encryptedFrame))
-	outBuf := make([]byte, capacity)
-
+func (d *Decryptor) Decrypt(mediaType MediaType, frame []byte, decryptedFrame []byte) (int, error) {
 	var bytesWritten C.size_t
 	if res := decryptorResultCode(C.daveDecryptorDecrypt(
 		d.handle,
 		C.DAVEMediaType(mediaType),
-		(*C.uint8_t)(unsafe.Pointer(&encryptedFrame[0])),
-		C.size_t(len(encryptedFrame)),
-		(*C.uint8_t)(unsafe.Pointer(&outBuf[0])),
-		C.size_t(capacity),
+		(*C.uint8_t)(unsafe.Pointer(&frame[0])),
+		C.size_t(len(frame)),
+		(*C.uint8_t)(unsafe.Pointer(&decryptedFrame[0])),
+		C.size_t(cap(decryptedFrame)),
 		&bytesWritten,
 	)); res != decryptorResultCodeSuccess {
-		return nil, res.ToError()
+		return int(bytesWritten), res.ToError()
 	}
 
-	return outBuf[:bytesWritten], nil
+	return int(bytesWritten), nil
 }
 
 func (d *Decryptor) GetStats(mediaType MediaType) *DecryptorStats {

@@ -43,11 +43,17 @@ type Session interface {
 	// AssignSsrcToCodec maps a given SSRC to a specific Codec.
 	AssignSsrcToCodec(ssrc uint32, codec Codec)
 
+	// MaxEncryptedFrameSize returns the maximum size of an encrypted OPUS frame given the frame size.
+	MaxEncryptedFrameSize(frameSize int) int
+
 	// Encrypt encrypts an OPUS frame.
-	Encrypt(ssrc uint32, frame []byte) ([]byte, error)
+	Encrypt(ssrc uint32, frame []byte, encryptedFrame []byte) (int, error)
+
+	// MaxDecryptedFrameSize returns the maximum size of a decrypted OPUS frame given the frame size.
+	MaxDecryptedFrameSize(userID UserID, frameSize int) int
 
 	// Decrypt decrypts an OPUS frame.
-	Decrypt(userID UserID, frame []byte) ([]byte, error)
+	Decrypt(userID UserID, frame []byte, decryptedFrame []byte) (int, error)
 
 	// AddUser adds a user to the MLS group.
 	AddUser(userID UserID)

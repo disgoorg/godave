@@ -40,7 +40,9 @@ type Encryptor struct {
 }
 
 func NewEncryptor() *Encryptor {
-	encryptor := &Encryptor{handle: C.daveEncryptorCreate()}
+	encryptor := &Encryptor{
+		handle: C.daveEncryptorCreate(),
+	}
 
 	runtime.AddCleanup(encryptor, func(handle encryptionHandle) {
 		C.daveEncryptorDestroy(handle)
@@ -69,10 +71,7 @@ func (e *Encryptor) GetMaxCiphertextByteSize(mediaType MediaType, frameSize int)
 	return int(C.daveEncryptorGetMaxCiphertextByteSize(e.handle, C.DAVEMediaType(mediaType), C.size_t(frameSize)))
 }
 
-func (e *Encryptor) Encrypt(mediaType MediaType, ssrc uint32, frame []byte) ([]byte, error) {
-	capacity := e.GetMaxCiphertextByteSize(mediaType, len(frame))
-	outBuf := make([]byte, capacity)
-
+func (e *Encryptor) Encrypt(mediaType MediaType, ssrc uint32, frame []byte, encryptedFrame []byte) (int, error) {
 	var bytesWritten C.size_t
 	if res := encryptorResultCode(C.daveEncryptorEncrypt(
 		e.handle,
@@ -80,14 +79,14 @@ func (e *Encryptor) Encrypt(mediaType MediaType, ssrc uint32, frame []byte) ([]b
 		C.uint32_t(ssrc),
 		(*C.uint8_t)(unsafe.Pointer(&frame[0])),
 		C.size_t(len(frame)),
-		(*C.uint8_t)(unsafe.Pointer(&outBuf[0])),
-		C.size_t(capacity),
+		(*C.uint8_t)(unsafe.Pointer(&encryptedFrame[0])),
+		C.size_t(cap(encryptedFrame)),
 		&bytesWritten,
 	)); res != encryptorResultCodeSuccess {
-		return nil, res.ToError()
+		return int(bytesWritten), res.ToError()
 	}
 
-	return outBuf[:bytesWritten], nil
+	return int(bytesWritten), nil
 }
 
 // FIXME: Implement

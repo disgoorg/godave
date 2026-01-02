@@ -20,11 +20,18 @@ type noopSession struct{}
 func (n *noopSession) MaxSupportedProtocolVersion() int {
 	return 0
 }
-func (n *noopSession) Encrypt(_ uint32, frame []byte) ([]byte, error) {
-	return frame, nil
+func (n *noopSession) MaxEncryptedFrameSize(frameSize int) int {
+	return frameSize
 }
-func (n *noopSession) Decrypt(_ UserID, frame []byte) ([]byte, error) {
-	return frame, nil
+func (n *noopSession) Encrypt(_ uint32, frame []byte, encryptedFrame []byte) (int, error) {
+	return copy(encryptedFrame, frame), nil
+}
+
+func (n *noopSession) MaxDecryptedFrameSize(_ UserID, frameSize int) int {
+	return frameSize
+}
+func (n *noopSession) Decrypt(_ UserID, frame []byte, decryptedFrame []byte) (int, error) {
+	return copy(decryptedFrame, frame), nil
 }
 func (n *noopSession) SetChannelID(_ ChannelID)                            {}
 func (n *noopSession) AssignSsrcToCodec(_ uint32, _ Codec)                 {}
