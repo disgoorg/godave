@@ -15,7 +15,7 @@ const (
 
 var (
 	_ godave.SessionCreateFunc = NewSession
-	_ godave.Session           = (*Session)(nil)
+	_ godave.Session           = (*session)(nil)
 )
 
 // NewSession returns a new DAVE session using libdave.
@@ -24,7 +24,7 @@ func NewSession(logger *slog.Logger, selfUserID godave.UserID, callbacks godave.
 	// Start in Passthrough by default
 	encryptor.SetPassthroughMode(true)
 
-	return &Session{
+	return &session{
 		selfUserID: selfUserID,
 		callbacks:  callbacks,
 		logger:     logger,
@@ -36,7 +36,7 @@ func NewSession(logger *slog.Logger, selfUserID godave.UserID, callbacks godave.
 	}
 }
 
-type Session struct {
+type session struct {
 	selfUserID          godave.UserID
 	channelID           godave.ChannelID
 	logger              *slog.Logger
@@ -47,27 +47,27 @@ type Session struct {
 	preparedTransitions map[uint16]uint16
 }
 
-func (s *Session) MaxSupportedProtocolVersion() int {
+func (s *session) MaxSupportedProtocolVersion() int {
 	return int(libdave.MaxSupportedProtocolVersion())
 }
 
-func (s *Session) SetChannelID(channelID godave.ChannelID) {
+func (s *session) SetChannelID(channelID godave.ChannelID) {
 	s.channelID = channelID
 }
 
-func (s *Session) AssignSsrcToCodec(ssrc uint32, codec godave.Codec) {
+func (s *session) AssignSsrcToCodec(ssrc uint32, codec godave.Codec) {
 	s.encryptor.AssignSsrcToCodec(ssrc, libdave.Codec(codec))
 }
 
-func (s *Session) MaxEncryptedFrameSize(frameSize int) int {
+func (s *session) MaxEncryptedFrameSize(frameSize int) int {
 	return s.encryptor.GetMaxCiphertextByteSize(libdave.MediaTypeAudio, frameSize)
 }
 
-func (s *Session) Encrypt(ssrc uint32, frame []byte, encryptedFrame []byte) (int, error) {
+func (s *session) Encrypt(ssrc uint32, frame []byte, encryptedFrame []byte) (int, error) {
 	return s.encryptor.Encrypt(libdave.MediaTypeAudio, ssrc, frame, encryptedFrame)
 }
 
-func (s *Session) MaxDecryptedFrameSize(userID godave.UserID, frameSize int) int {
+func (s *session) MaxDecryptedFrameSize(userID godave.UserID, frameSize int) int {
 	if decryptor, ok := s.decryptors[userID]; ok {
 		return decryptor.GetMaxPlaintextByteSize(libdave.MediaTypeAudio, frameSize)
 	}
@@ -76,7 +76,7 @@ func (s *Session) MaxDecryptedFrameSize(userID godave.UserID, frameSize int) int
 	return frameSize
 }
 
-func (s *Session) Decrypt(userID godave.UserID, frame []byte, decryptedFrame []byte) (int, error) {
+func (s *session) Decrypt(userID godave.UserID, frame []byte, decryptedFrame []byte) (int, error) {
 	if decryptor, ok := s.decryptors[userID]; ok {
 		return decryptor.Decrypt(libdave.MediaTypeAudio, frame, decryptedFrame)
 	}
@@ -85,20 +85,20 @@ func (s *Session) Decrypt(userID godave.UserID, frame []byte, decryptedFrame []b
 	return copy(frame, decryptedFrame), nil
 }
 
-func (s *Session) AddUser(userID godave.UserID) {
+func (s *session) AddUser(userID godave.UserID) {
 	s.decryptors[userID] = libdave.NewDecryptor()
 	s.setupKeyRatchetForUser(userID, s.session.GetProtocolVersion())
 }
 
-func (s *Session) RemoveUser(userID godave.UserID) {
+func (s *session) RemoveUser(userID godave.UserID) {
 	delete(s.decryptors, userID)
 }
 
-func (s *Session) OnSelectProtocolAck(protocolVersion uint16) {
+func (s *session) OnSelectProtocolAck(protocolVersion uint16) {
 	s.protocolInit(protocolVersion)
 }
 
-func (s *Session) OnDavePrepareTransition(transitionID uint16, protocolVersion uint16) {
+func (s *session) OnDavePrepareTransition(transitionID uint16, protocolVersion uint16) {
 	s.prepareTransition(transitionID, protocolVersion)
 
 	if transitionID != initTransitionId {
@@ -106,11 +106,11 @@ func (s *Session) OnDavePrepareTransition(transitionID uint16, protocolVersion u
 	}
 }
 
-func (s *Session) OnDaveExecuteTransition(transitionID uint16) {
+func (s *session) OnDaveExecuteTransition(transitionID uint16) {
 	s.executeTransition(transitionID)
 }
 
-func (s *Session) OnDavePrepareEpoch(epoch int, protocolVersion uint16) {
+func (s *session) OnDavePrepareEpoch(epoch int, protocolVersion uint16) {
 	s.prepareEpoch(epoch, protocolVersion)
 
 	if epoch == mlsNewGroupExpectedEpoch {
@@ -118,11 +118,11 @@ func (s *Session) OnDavePrepareEpoch(epoch int, protocolVersion uint16) {
 	}
 }
 
-func (s *Session) OnDaveMLSExternalSenderPackage(externalSenderPackage []byte) {
+func (s *session) OnDaveMLSExternalSenderPackage(externalSenderPackage []byte) {
 	s.session.SetExternalSender(externalSenderPackage)
 }
 
-func (s *Session) OnDaveMLSProposals(proposals []byte) {
+func (s *session) OnDaveMLSProposals(proposals []byte) {
 	commitWelcome := s.session.ProcessProposals(proposals, s.recognizedUserIDs())
 
 	if commitWelcome != nil {
@@ -130,7 +130,7 @@ func (s *Session) OnDaveMLSProposals(proposals []byte) {
 	}
 }
 
-func (s *Session) OnDaveMLSPrepareCommitTransition(transitionID uint16, commitMessage []byte) {
+func (s *session) OnDaveMLSPrepareCommitTransition(transitionID uint16, commitMessage []byte) {
 	res := s.session.ProcessCommit(commitMessage)
 
 	if res.IsIgnored() {
@@ -149,7 +149,7 @@ func (s *Session) OnDaveMLSPrepareCommitTransition(transitionID uint16, commitMe
 	}
 }
 
-func (s *Session) OnDaveMLSWelcome(transitionID uint16, welcomeMessage []byte) {
+func (s *session) OnDaveMLSWelcome(transitionID uint16, welcomeMessage []byte) {
 	res := s.session.ProcessWelcome(welcomeMessage, s.recognizedUserIDs())
 
 	if res == nil {
@@ -164,7 +164,7 @@ func (s *Session) OnDaveMLSWelcome(transitionID uint16, welcomeMessage []byte) {
 	}
 }
 
-func (s *Session) recognizedUserIDs() []string {
+func (s *session) recognizedUserIDs() []string {
 	userIDs := make([]string, 0, len(s.decryptors)+1)
 
 	userIDs = append(userIDs, string(s.selfUserID))
@@ -176,7 +176,7 @@ func (s *Session) recognizedUserIDs() []string {
 	return userIDs
 }
 
-func (s *Session) protocolInit(protocolVersion uint16) {
+func (s *session) protocolInit(protocolVersion uint16) {
 	if protocolVersion > disabledProtocolVersion {
 		s.prepareEpoch(mlsNewGroupExpectedEpoch, protocolVersion)
 		s.sendMLSKeyPackage()
@@ -186,7 +186,7 @@ func (s *Session) protocolInit(protocolVersion uint16) {
 	}
 }
 
-func (s *Session) prepareEpoch(epoch int, protocolVersion uint16) {
+func (s *session) prepareEpoch(epoch int, protocolVersion uint16) {
 	if epoch != mlsNewGroupExpectedEpoch {
 		return
 	}
@@ -194,7 +194,7 @@ func (s *Session) prepareEpoch(epoch int, protocolVersion uint16) {
 	s.session.Init(protocolVersion, uint64(s.channelID), string(s.selfUserID))
 }
 
-func (s *Session) executeTransition(transitionID uint16) {
+func (s *session) executeTransition(transitionID uint16) {
 	protocolVersion, ok := s.preparedTransitions[transitionID]
 	if !ok {
 		return
@@ -209,7 +209,7 @@ func (s *Session) executeTransition(transitionID uint16) {
 	s.setupKeyRatchetForUser(s.selfUserID, protocolVersion)
 }
 
-func (s *Session) prepareTransition(transitionID uint16, protocolVersion uint16) {
+func (s *session) prepareTransition(transitionID uint16, protocolVersion uint16) {
 	for userID, _ := range s.decryptors {
 		s.setupKeyRatchetForUser(userID, protocolVersion)
 	}
@@ -221,7 +221,7 @@ func (s *Session) prepareTransition(transitionID uint16, protocolVersion uint16)
 	}
 }
 
-func (s *Session) setupKeyRatchetForUser(userID godave.UserID, protocolVersion uint16) {
+func (s *session) setupKeyRatchetForUser(userID godave.UserID, protocolVersion uint16) {
 	disabled := protocolVersion == disabledProtocolVersion
 
 	if userID == s.selfUserID {
@@ -239,25 +239,25 @@ func (s *Session) setupKeyRatchetForUser(userID godave.UserID, protocolVersion u
 	}
 }
 
-func (s *Session) sendMLSKeyPackage() {
+func (s *session) sendMLSKeyPackage() {
 	if err := s.callbacks.SendMLSKeyPackage(s.session.GetMarshalledKeyPackage()); err != nil {
 		s.logger.Error("failed to send MLS key package", slog.Any("err", err))
 	}
 }
 
-func (s *Session) sendMLSCommitWelcome(message []byte) {
+func (s *session) sendMLSCommitWelcome(message []byte) {
 	if err := s.callbacks.SendMLSCommitWelcome(message); err != nil {
 		s.logger.Error("failed to send MLS commit welcome", slog.Any("err", err))
 	}
 }
 
-func (s *Session) sendReadyForTransition(transitionID uint16) {
+func (s *session) sendReadyForTransition(transitionID uint16) {
 	if err := s.callbacks.SendReadyForTransition(transitionID); err != nil {
 		s.logger.Error("failed to send ready for transition", slog.Any("err", err))
 	}
 }
 
-func (s *Session) sendInvalidCommitWelcome(transitionID uint16) {
+func (s *session) sendInvalidCommitWelcome(transitionID uint16) {
 	if err := s.callbacks.SendInvalidCommitWelcome(transitionID); err != nil {
 		s.logger.Error("failed to send invalid commit welcome", slog.Any("err", err))
 	}
