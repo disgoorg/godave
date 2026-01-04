@@ -37,14 +37,15 @@ func NewSession(logger *slog.Logger, selfUserID godave.UserID, callbacks godave.
 }
 
 type session struct {
-	selfUserID          godave.UserID
-	channelID           godave.ChannelID
-	logger              *slog.Logger
-	callbacks           godave.Callbacks
-	session             *libdave.Session
-	encryptor           *libdave.Encryptor
-	decryptors          map[godave.UserID]*libdave.Decryptor
-	preparedTransitions map[uint16]uint16
+	selfUserID                    godave.UserID
+	channelID                     godave.ChannelID
+	logger                        *slog.Logger
+	callbacks                     godave.Callbacks
+	session                       *libdave.Session
+	encryptor                     *libdave.Encryptor
+	decryptors                    map[godave.UserID]*libdave.Decryptor
+	preparedTransitions           map[uint16]uint16
+	lastPreparedTransitionVersion uint16
 }
 
 func (s *session) MaxSupportedProtocolVersion() int {
@@ -87,7 +88,7 @@ func (s *session) Decrypt(userID godave.UserID, frame []byte, decryptedFrame []b
 
 func (s *session) AddUser(userID godave.UserID) {
 	s.decryptors[userID] = libdave.NewDecryptor()
-	s.setupKeyRatchetForUser(userID, s.session.GetProtocolVersion())
+	s.setupKeyRatchetForUser(userID, s.lastPreparedTransitionVersion)
 }
 
 func (s *session) RemoveUser(userID godave.UserID) {
@@ -210,7 +211,7 @@ func (s *session) executeTransition(transitionID uint16) {
 }
 
 func (s *session) prepareTransition(transitionID uint16, protocolVersion uint16) {
-	for userID, _ := range s.decryptors {
+	for userID := range s.decryptors {
 		s.setupKeyRatchetForUser(userID, protocolVersion)
 	}
 
@@ -219,6 +220,8 @@ func (s *session) prepareTransition(transitionID uint16, protocolVersion uint16)
 	} else {
 		s.preparedTransitions[transitionID] = protocolVersion
 	}
+
+	s.lastPreparedTransitionVersion = protocolVersion
 }
 
 func (s *session) setupKeyRatchetForUser(userID godave.UserID, protocolVersion uint16) {
