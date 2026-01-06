@@ -73,7 +73,7 @@ func (e *Encryptor) GetMaxCiphertextByteSize(mediaType MediaType, frameSize int)
 
 func (e *Encryptor) Encrypt(mediaType MediaType, ssrc uint32, frame []byte, encryptedFrame []byte) (int, error) {
 	var bytesWritten C.size_t
-	if res := encryptorResultCode(C.daveEncryptorEncrypt(
+	res := encryptorResultCode(C.daveEncryptorEncrypt(
 		e.handle,
 		C.DAVEMediaType(mediaType),
 		C.uint32_t(ssrc),
@@ -82,11 +82,9 @@ func (e *Encryptor) Encrypt(mediaType MediaType, ssrc uint32, frame []byte, encr
 		(*C.uint8_t)(unsafe.Pointer(&encryptedFrame[0])),
 		C.size_t(cap(encryptedFrame)),
 		&bytesWritten,
-	)); res != encryptorResultCodeSuccess {
-		return int(bytesWritten), res.ToError()
-	}
+	))
 
-	return int(bytesWritten), nil
+	return int(bytesWritten), res.ToError()
 }
 
 // FIXME: Implement
