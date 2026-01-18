@@ -28,16 +28,16 @@ jobs:
         run: |
           # Get the latest release from the remote repository
           LATEST_RELEASE=$(gh release view --repo "$LIBDAVE_REPO" --json tagName --template '{{.tagName}}')
-          echo "Remote SHA: $LATEST_RELEASE"
+          echo "Latest version: $LATEST_RELEASE"
 
           RELEASE_FILE="libdave/lib/release.txt"
           LOCAL_RELEASE=""
 
           if [ -f "$RELEASE_FILE" ]; then
             LOCAL_SHA=$(cat "$LOCAL_FILE" | tr -d '[:space:]')
-            echo "Local SHA: $LOCAL_FILE"
+            echo "Local version: $LOCAL_FILE"
           else
-            echo "Local SHA file not found."
+            echo "Local version: file not found"
           fi
 
           if [ "$LATEST_RELEASE" != "$LOCAL_FILE" ]; then
