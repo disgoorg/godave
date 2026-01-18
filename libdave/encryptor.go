@@ -1,9 +1,12 @@
 package libdave
 
-// #include "dave.h"
+// #include "lib/include/dave.h"
+// extern void godaveProtocolVersionChangedCallback(void* userData);
 import "C"
 import (
+	"log/slog"
 	"runtime"
+	"runtime/cgo"
 	"unsafe"
 )
 
@@ -12,15 +15,32 @@ type encryptorResultCode int
 const (
 	encryptorResultCodeSuccess encryptorResultCode = iota
 	encryptorResultCodeEncryptionFailure
+	encryptorResultCodeMissingKeyRatchet
+	encryptionResultCodeMissingCryptor
+	encryptionResultCodeTooManyAttempts
 )
 
 func (r encryptorResultCode) ToError() error {
 	switch r {
-	case encryptorResultCodeEncryptionFailure:
-		return ErrEncryptionFailure
-	default:
+	case encryptorResultCodeSuccess:
 		return nil
+	case encryptorResultCodeMissingKeyRatchet:
+		return ErrMissingKeyRatchet
+	case encryptionResultCodeMissingCryptor:
+		return ErrMissingCryptor
+	case encryptionResultCodeTooManyAttempts:
+		return ErrTooManyAttempts
+	default:
+		return ErrGenericEncryptionFailure
 	}
+}
+
+//export godaveProtocolVersionChangedCallback
+func godaveProtocolVersionChangedCallback(userData unsafe.Pointer) {
+	h := *(*cgo.Handle)(userData)
+	println(h)
+	encryptor := h.Value().(*Encryptor)
+	defaultLogger.Load().Error("protocol version changed", slog.Int("newVersion", int(encryptor.GetProtocolVersion())))
 }
 
 type EncryptorStats struct {
@@ -36,7 +56,9 @@ type EncryptorStats struct {
 type encryptionHandle = C.DAVEEncryptorHandle
 
 type Encryptor struct {
-	handle encryptionHandle
+	handle    encryptionHandle
+	pinner    runtime.Pinner
+	cgoHandle cgo.Handle
 }
 
 func NewEncryptor() *Encryptor {
@@ -44,11 +66,29 @@ func NewEncryptor() *Encryptor {
 		handle: C.daveEncryptorCreate(),
 	}
 
+	encryptor.cgoHandle = cgo.NewHandle(encryptor)
+
+	C.daveEncryptorSetProtocolVersionChangedCallback(
+		encryptor.handle,
+		C.DAVEEncryptorProtocolVersionChangedCallback(C.godaveProtocolVersionChangedCallback),
+		unsafe.Pointer(encryptor.cgoHandle),
+	)
+	println(unsafe.Pointer(encryptor.cgoHandle))
+
 	runtime.AddCleanup(encryptor, func(handle encryptionHandle) {
 		C.daveEncryptorDestroy(handle)
+		encryptor.cgoHandle.Delete()
 	}, encryptor.handle)
 
 	return encryptor
+}
+
+func (e *Encryptor) HasKeyRatchet() bool {
+	return bool(C.daveEncryptorHasKeyRatchet(e.handle))
+}
+
+func (e *Encryptor) IsPassthroughMode() bool {
+	return bool(C.daveEncryptorIsPassthroughMode(e.handle))
 }
 
 func (e *Encryptor) SetKeyRatchet(keyRatchet *KeyRatchet) {
@@ -86,11 +126,6 @@ func (e *Encryptor) Encrypt(mediaType MediaType, ssrc uint32, frame []byte, encr
 
 	return int(bytesWritten), res.ToError()
 }
-
-// FIXME: Implement
-// func (e *Encryptor) SetProtocolVersionChangedCallback() {
-//	panic("TODO")
-// }
 
 func (e *Encryptor) GetStats(mediaType MediaType) *EncryptorStats {
 	var cStats C.DAVEEncryptorStats

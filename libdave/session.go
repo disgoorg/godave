@@ -1,12 +1,14 @@
 package libdave
 
 // #include <stdlib.h>
-// #include "dave.h"
-// extern void libdaveGlobalFailureCallback(char* source, char* reason);
+// #include "lib/include/dave.h"
+// extern void godaveGlobalFailureCallback(char* source, char* reason, void* userData);
+// extern void godavePairwiseFingerprintCallback(uint8_t* fingerpint, size_t length, void* userData);
 import "C"
 import (
 	"log/slog"
 	"runtime"
+	"runtime/cgo"
 	"unsafe"
 )
 
@@ -16,9 +18,20 @@ type Session struct {
 	handle sessionHandle
 }
 
-//export libdaveGlobalFailureCallback
-func libdaveGlobalFailureCallback(source *C.char, reason *C.char) {
-	defaultLogger.Load().Error(C.GoString(reason), slog.String("source", C.GoString(source)))
+//export godaveGlobalFailureCallback
+func godaveGlobalFailureCallback(source *C.char, reason *C.char, userData unsafe.Pointer) {
+	defaultLogger.Load().Error(
+		C.GoString(reason),
+		slog.String("source", C.GoString(source)),
+		slog.String("authSessionID", C.GoString((*C.char)(userData))),
+	)
+}
+
+//export godavePairwiseFingerprintCallback
+func godavePairwiseFingerprintCallback(fingerprint *C.uint8_t, length C.size_t, userData unsafe.Pointer) {
+	h := *(*cgo.Handle)(userData)
+	retChan := *h.Value().(*chan []byte)
+	retChan <- newCBytesMemoryView(fingerprint, length)
 }
 
 func NewSession(context string, authSessionID string) *Session {
@@ -32,7 +45,8 @@ func NewSession(context string, authSessionID string) *Session {
 		handle: C.daveSessionCreate(
 			unsafe.Pointer(cContext),
 			cAuthSessionID,
-			C.DAVEMLSFailureCallback(unsafe.Pointer(C.libdaveGlobalFailureCallback)),
+			C.DAVEMLSFailureCallback(unsafe.Pointer(C.godaveGlobalFailureCallback)),
+			unsafe.Pointer(cAuthSessionID),
 		),
 	}
 
@@ -131,20 +145,21 @@ func (s *Session) GetKeyRatchet(userID string) *KeyRatchet {
 	return newKeyRatchet(C.daveSessionGetKeyRatchet(s.handle, cUserID))
 }
 
-// FIXME: Implement using trampoline when https://github.com/discord/libdave/issues/10 is implemented
-//        An alternative is to use a global cgo.Handle, but it will prevent concurrent calls to GetPairwiseFingerprint
-// func (session *Session) GetPairwiseFingerprint(version uint16, userID string) []byte {
-// 	cUserID := C.CString(userID)
-// 	defer C.free(unsafe.Pointer(cUserID))
-//
-// 	ch := make(chan []byte)
-// 	callback := func(fingerprint *C.uint8_t, length C.size_t) {
-// 		ch <- newCBytesMemoryView(fingerprint, length)
-// 	}
-//
-// 	fHandle := cgo.NewHandle(callback)
-// 	defer fHandle.Delete()
-// 	C.daveSessionGetPairwiseFingerprint(session.handle, C.uint16_t(version), cUserID, (C.DAVEPairwiseFingerprintCallback)(unsafe.Pointer(fHandle)))
-//
-// 	return <-ch
-// }
+func (s *Session) GetPairwiseFingerprint(version uint16, userID string) []byte {
+	cUserID := C.CString(userID)
+	defer C.free(unsafe.Pointer(cUserID))
+
+	ch := make(chan []byte)
+	handler := cgo.NewHandle(ch)
+	defer handler.Delete()
+
+	C.daveSessionGetPairwiseFingerprint(
+		s.handle,
+		C.uint16_t(version),
+		cUserID,
+		(C.DAVEPairwiseFingerprintCallback)(unsafe.Pointer(C.godavePairwiseFingerprintCallback)),
+		unsafe.Pointer(&handler),
+	)
+
+	return <-ch
+}

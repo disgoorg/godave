@@ -1,6 +1,6 @@
 package libdave
 
-// #include "dave.h"
+// #include "lib/include/dave.h"
 import "C"
 import (
 	"runtime"
@@ -19,8 +19,8 @@ const (
 
 func (r decryptorResultCode) ToError() error {
 	switch r {
-	case decryptorResultCodeDecryptionFailure:
-		return ErrDecryptionFailure
+	case decryptorResultCodeSuccess:
+		return nil
 	case decryptorResultCodeMissingKeyRatchet:
 		return ErrMissingKeyRatchet
 	case decryptorResultCodeInvalidNonce:
@@ -28,7 +28,7 @@ func (r decryptorResultCode) ToError() error {
 	case decryptorResultCodeMissingCryptor:
 		return ErrMissingCryptor
 	default:
-		return nil
+		return ErrGenericDecryptionFailure
 	}
 }
 
