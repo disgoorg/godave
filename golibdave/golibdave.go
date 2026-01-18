@@ -89,6 +89,9 @@ func (s *session) Decrypt(userID godave.UserID, frame []byte, decryptedFrame []b
 func (s *session) AddUser(userID godave.UserID) {
 	s.decryptors[userID] = libdave.NewDecryptor()
 	s.setupKeyRatchetForUser(userID, s.lastPreparedTransitionVersion)
+
+	// FIXME: Remove, this is to test the function
+	println(s.session.GetPairwiseFingerprint(s.lastPreparedTransitionVersion, string(userID)))
 }
 
 func (s *session) RemoveUser(userID godave.UserID) {
