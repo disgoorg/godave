@@ -30,14 +30,20 @@ jobs:
         run: |
           go work init . ./libdave ./golibdave
 
+      - name: Install pkg-config (windows only)
+        if: matrix.runner == 'windows-latest'
+        run: |
+          choco install pkgconfiglite
+
       - name: Install libdave
         run: |
-          touch ~/.bashrc
+          touch "$HOME/.bashrc"
           NON_INTERACTIVE=1 bash scripts/libdave_install.sh
-          source "$HOME/.bashrc"
 
       - name: Test build
         run: |
+          source "$HOME/.bashrc"
+
           go build
           go build ./libdave
           go build ./golibdave
