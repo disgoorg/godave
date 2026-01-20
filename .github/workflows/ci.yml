@@ -31,6 +31,5 @@ jobs:
           go work init . ./libdave ./golibdave
 
       - name: "Test libdave"
-        if: matrix.runner != 'windows-latest'
         run: |
           go test ./libdave
