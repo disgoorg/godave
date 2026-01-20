@@ -14,6 +14,8 @@ different implementations in the future.
 
 ## Summary
 1. [Libdave Installation](#libdave-installation)
+   1. [Windows Installation](#windows-instructions)
+   2. [Installing manually](#manual-installation)
 2. [Example Usage](#example-usage)
 3. [License](#license)
 
@@ -23,8 +25,17 @@ This library uses CGO and dynamic linking to use libdave. We automatically pull 
 against the [shared libraries published by Discord](https://github.com/discord/libdave/releases).
 
 As such, if you are using an operating system and architecture combination which does not have any pre-built libraries,
-you will have to do a bit more tinkering.
+you will have to do a bit more tinkering (see bellow)
 
+If you are using an operating system which is covered under the releases provided by Discord (and you are not on Windows)
+then there is nothing else for you to  do, you can use GoDave directly!
+
+### Windows instructions
+
+If you are using Windows, the binaries provided by Discord are actually a static library, so you will have to download
+and extract the `libdave.lib` and place it next to your final executable.
+
+### Manual Installation
 If you know CGO, you can manually build and set the correct compiler flags for it to be resolved correctly. For those
 who don't know CGO, don't worry, we have got you covered!
 
@@ -42,7 +53,7 @@ After it is done building, add the following to your `main.go` file:
 import "C"
 ```
 
-With this, you should not be able to use libdave.
+With this, you should now be able to use libdave.
 
 > [!NOTE]
 > Due to the nature of this project, it might be necessary to re-install libdave when updating to a new GoDave version.

@@ -9,7 +9,7 @@ defaults:
     shell: bash
 
 jobs:
-  libdave-ci:
+  libdave:
     strategy:
       matrix:
         runner: [ubuntu-latest, macos-latest, macos-15-intel, windows-latest]
@@ -30,6 +30,10 @@ jobs:
         run: |
           go work init . ./libdave ./golibdave
 
-      - name: Test build
+      - name: "[Windows Only] Place lidave.lib in the correct folder"
+        run: |
+          cp libdave/lib/build/win_x64/libdave.lib  .
+
+      - name: Test libdave
         run: |
           go test ./libdave
