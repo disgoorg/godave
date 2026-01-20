@@ -43,11 +43,11 @@ jobs:
 
           if [ "$LATEST_RELEASE" != "$LOCAL_FILE" ]; then
             echo "New version detected. Triggering build"
-            echo "should_update=true" >> "$GITHUB_OUTPUT"
-            echo "new_version=$LATEST_RELEASE" >> "$GITHUB_OUTPUT"
+            echo "should_update=true" >> $GITHUB_OUTPUT
+            echo "new_version=$LATEST_RELEASE" >> $GITHUB_OUTPUT
           else
             echo "Versions match. No update needed"
-            echo "should_update=false" >> "$GITHUB_OUTPUT"
+            echo "should_update=false" >> $GITHUB_OUTPUT
           fi
 
   update-artifacts:
