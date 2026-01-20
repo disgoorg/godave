@@ -104,8 +104,33 @@ rm -rf "$WORK_DIR"
 
 echo "--- Installation Complete ---"
 echo "libdave version installed: $VERSION ($ARCH)"
-echo
-echo "Please update your shell profile with the following lines (if not done so already):"
-echo
-echo "export PKG_CONFIG_PATH=\"$PC_DIR:\$PKG_CONFIG_PATH\""
-echo "export $LIB_VAR=\"$LIB_DIR:\$$LIB_VAR\""
+
+# Identify the shell profile (defaults to .bashrc, or .zshrc if on macOS/zsh)
+PROFILE_FILE="$HOME/.bashrc"
+[[ "$SHELL" == *"zsh"* ]] && PROFILE_FILE="$HOME/.zshrc"
+
+PC_LINE="export PKG_CONFIG_PATH=\"\$HOME/.local/lib/pkgconfig:\$PKG_CONFIG_PATH\""
+LIB_LINE="export $LIB_VAR=\"\$HOME/.local/lib:\$$LIB_VAR\""
+
+NEEDS_PC=$(grep -qF -- "$PC_LINE" "$PROFILE_FILE"; echo $?)
+NEEDS_LIB=$(grep -qF -- "$LIB_LINE" "$PROFILE_FILE"; echo $?)
+
+# Check if lines already exist
+if [ "$NEEDS_PC" -eq 1 ] || [ "$NEEDS_LIB" -eq 1 ]; then
+    echo
+    echo "The following lines are missing from your $PROFILE_FILE:"
+    [[ "$NEEDS_PC" -eq 1 ]] && echo "    $PC_LINE"
+    [[ "$NEEDS_LIB" -eq 1 ]] && echo "    $LIB_LINE"
+
+    read -p "Would you like to add them now? (y/n) " -r
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        {
+            [[ "$NEEDS_PC" -eq 1 ]] && echo "$PC_LINE"
+            [[ "$NEEDS_LIB" -eq 1 ]] && echo "$LIB_LINE"
+        } >> "$PROFILE_FILE"
+
+        echo "Profile updated! Please run 'source $PROFILE_FILE' or restart your terminal for the changes to apply"
+    else
+        echo "Skipped. Please add the lines manually to use libdave"
+    fi
+fi
