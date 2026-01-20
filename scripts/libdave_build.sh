@@ -33,14 +33,17 @@ case "${PLATFORM}" in
     Darwin)
       LIB_EXT="dylib"
       LIB_VAR="DYLD_LIBRARY_PATH"
+      OS="macos"
       ;;
     Linux)
       LIB_EXT="so"
       LIB_VAR="LD_LIBRARY_PATH"
+      OS="linux"
       ;;
     "MINGW"*|"MSYS"*|"CYGWIN"*)
       LIB_EXT="lib"
       LIB_VAR="PATH"
+      OS="windows"
       ;;
     *) echo "Unsupported OS"; exit 1 ;;
 esac
@@ -50,7 +53,7 @@ REQUIRED_CMDS=("git" "make" "cmake" "curl" "zip")
 for cmd in "${REQUIRED_CMDS[@]}"; do
   if ! command -v "$cmd" &> /dev/null; then
     echo "Error: $cmd is not installed."
-    if [ "$PLATFORM" == "macos" ]; then
+    if [ "$OS" == "macos" ]; then
       echo "Please run: brew install $cmd"
     else
       echo "Please install it using your package manager (apt, dnf, etc.)"
@@ -78,13 +81,12 @@ mkdir -p "$LIB_DIR" "$INC_DIR" "$PC_DIR"
 
 cp includes/dave/dave.h "$INC_DIR/"
 
-# Handle potential naming variations on macOS
-if [ -f "build/libdave.$LIB_EXT" ]; then
-    cp "build/libdave.$LIB_EXT" "$LIB_DIR/"
-elif [ -f "build/libdave.so" ] && [ "$PLATFORM" == "macos" ]; then
-    cp "build/libdave.so" "$LIB_DIR/libdave.dylib"
+if [ "$OS" == "windows" ]; then
+  # We need to copy the DLL and LIB files
+  cp "build/Release/libdave.$LIB_EXT" "$LIB_DIR/"
+  cp "build/Release/libdave.dll" "$LIB_DIR/"
 else
-    cp build/libdave.* "$LIB_DIR/" 2>/dev/null || echo "Warning: Could not find build artifacts"
+  cp "build/libdave.$LIB_EXT" "$LIB_DIR/"
 fi
 
 echo "-> Generating pkg-config metadata"
@@ -115,31 +117,33 @@ PROFILE_FILE="$HOME/.bashrc"
 PC_LINE="export PKG_CONFIG_PATH=\"\$HOME/.local/lib/pkgconfig:\$PKG_CONFIG_PATH\""
 LIB_LINE="export $LIB_VAR=\"\$HOME/.local/lib:\$$LIB_VAR\""
 
-NEEDS_PC=$(grep -qF -- "$PC_LINE" "$PROFILE_FILE"; echo $?)
-NEEDS_LIB=$(grep -qF -- "$LIB_LINE" "$PROFILE_FILE"; echo $?)
+if [ -f "$PROFILE_FILE" ]; then
+  NEEDS_PC=$(grep -qF -- "$PC_LINE" "$PROFILE_FILE"; echo $?)
+  NEEDS_LIB=$(grep -qF -- "$LIB_LINE" "$PROFILE_FILE"; echo $?)
+fi
 
 # Check if lines already exist
 if [ "$NEEDS_PC" -eq 1 ] || [ "$NEEDS_LIB" -eq 1 ]; then
-    echo
-    echo "The following lines are missing from your $PROFILE_FILE:"
-    [[ "$NEEDS_PC" -eq 1 ]] && echo "    $PC_LINE"
-    [[ "$NEEDS_LIB" -eq 1 ]] && echo "    $LIB_LINE"
+  echo
+  echo "The following lines are missing from your $PROFILE_FILE:"
+  [[ "$NEEDS_PC" -eq 1 ]] && echo "    $PC_LINE"
+  [[ "$NEEDS_LIB" -eq 1 ]] && echo "    $LIB_LINE"
 
-    if [ -z "$NON_INTERACTIVE" ] ; then
-      read -p "Would you like to add them now? (y/n) " -r
-    else
-      REPLY="y"
-    fi
+  if [ -z "$NON_INTERACTIVE" ] ; then
+    read -p "Would you like to add them now? (y/n) " -r
+  else
+    REPLY="y"
+  fi
 
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        {
-            [[ "$NEEDS_PC" -eq 1 ]] && echo "$PC_LINE"
-            [[ "$NEEDS_LIB" -eq 1 ]] && echo "$LIB_LINE"
-        } >> "$PROFILE_FILE"
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    {
+        [[ "$NEEDS_PC" -eq 1 ]] && echo "$PC_LINE"
+        [[ "$NEEDS_LIB" -eq 1 ]] && echo "$LIB_LINE"
+    } >> "$PROFILE_FILE"
 
-        echo "Profile updated! Please run 'source $PROFILE_FILE' or restart your terminal for the changes to apply"
-    else
-        echo "Skipped. Please add the lines manually to use libdave"
-    fi
+    echo "Profile updated! Please run 'source $PROFILE_FILE' or restart your terminal for the changes to apply"
+  else
+    echo "Skipped. Please add the lines manually to use libdave"
+  fi
 fi

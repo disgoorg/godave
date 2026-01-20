@@ -32,7 +32,9 @@ then there is nothing else for you to  do, you can use GoDave directly!
 
 ### Windows instructions
 
-Windows support is still not fully functional and will come in a future.
+Windows requires an extra step to get GoDave working. You will have to grab the DLL for your platform from
+[libdave/vendor/bin](https://github.com/disgoorg/godave/tree/master/libdave/vendor/bin/) and place it somewhere in your
+PATH for Windows to resolve it. The easiest way to do this it to place it next to your executable before you run it.
 
 ### Manual Installation
 If you know CGO, you can manually build and set the correct compiler flags for it to be resolved correctly. For those
