@@ -1,6 +1,6 @@
 package libdave
 
-// #include "lib/include/dave.h"
+// #include "dave.h"
 import "C"
 import "runtime"
 
@@ -19,9 +19,9 @@ func newWelcomeResult(handle welcomeResultHandle) *WelcomeResult {
 		handle: handle,
 	}
 
-	runtime.AddCleanup(welcomeResult, func(handle welcomeResultHandle) {
-		C.daveWelcomeResultDestroy(handle)
-	}, welcomeResult.handle)
+	runtime.SetFinalizer(welcomeResult, func(s *WelcomeResult) {
+		C.daveWelcomeResultDestroy(s.handle)
+	})
 
 	return welcomeResult
 }
@@ -33,7 +33,7 @@ func (w *WelcomeResult) GetRosterMemberIDs() []uint64 {
 	)
 	C.daveWelcomeResultGetRosterMemberIds(w.handle, &rosterIDs, &rosterIDsLength)
 
-	return newCUint64MemoryView(rosterIDs, rosterIDsLength)
+	return newUint64Slice(rosterIDs, rosterIDsLength)
 }
 
 func (w *WelcomeResult) GetRosterMemberSignature(rosterID uint64) []byte {
@@ -43,5 +43,5 @@ func (w *WelcomeResult) GetRosterMemberSignature(rosterID uint64) []byte {
 	)
 	C.daveWelcomeResultGetRosterMemberSignature(w.handle, C.uint64_t(rosterID), &rosterMemberSignature, &rosterMemberSignatureLength)
 
-	return newCBytesMemoryView(rosterMemberSignature, rosterMemberSignatureLength)
+	return newByteSlice(rosterMemberSignature, rosterMemberSignatureLength)
 }

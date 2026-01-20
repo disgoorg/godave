@@ -1,6 +1,6 @@
 package libdave
 
-// #include "lib/include/dave.h"
+// #include "dave.h"
 import "C"
 import "runtime"
 
@@ -15,9 +15,9 @@ func newCommitResult(handle commitResultHandle) *CommitResult {
 		handle: handle,
 	}
 
-	runtime.AddCleanup(commitResult, func(handle commitResultHandle) {
-		C.daveCommitResultDestroy(handle)
-	}, commitResult.handle)
+	runtime.SetFinalizer(commitResult, func(c *CommitResult) {
+		C.daveCommitResultDestroy(c.handle)
+	})
 
 	return commitResult
 }
@@ -37,7 +37,7 @@ func (r *CommitResult) GetRosterMemberIDs() []uint64 {
 	)
 	C.daveCommitResultGetRosterMemberIds(r.handle, &rosterIDs, &rosterIDsLength)
 
-	return newCUint64MemoryView(rosterIDs, rosterIDsLength)
+	return newUint64Slice(rosterIDs, rosterIDsLength)
 }
 
 func (r *CommitResult) GetRosterMemberSignature(rosterID uint64) []byte {
@@ -47,5 +47,5 @@ func (r *CommitResult) GetRosterMemberSignature(rosterID uint64) []byte {
 	)
 	C.daveCommitResultGetRosterMemberSignature(r.handle, C.uint64_t(rosterID), &rosterMemberSignature, &rosterMemberSignatureLength)
 
-	return newCBytesMemoryView(rosterMemberSignature, rosterMemberSignatureLength)
+	return newByteSlice(rosterMemberSignature, rosterMemberSignatureLength)
 }

@@ -1,6 +1,6 @@
 package libdave
 
-// #include "lib/include/dave.h"
+// #include "dave.h"
 // extern void godaveProtocolVersionChangedCallback(void* userData);
 import "C"
 import (
@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"runtime/cgo"
 	"unsafe"
+	"weak"
 )
 
 type encryptorResultCode int
@@ -38,9 +39,13 @@ func (r encryptorResultCode) ToError() error {
 //export godaveProtocolVersionChangedCallback
 func godaveProtocolVersionChangedCallback(userData unsafe.Pointer) {
 	h := *(*cgo.Handle)(userData)
-	println(h)
-	encryptor := h.Value().(*Encryptor)
-	defaultLogger.Load().Error("protocol version changed", slog.Int("newVersion", int(encryptor.GetProtocolVersion())))
+	encryptor := h.Value().(weak.Pointer[Encryptor]).Value()
+
+	if encryptor == nil {
+		return
+	}
+
+	defaultLogger.Load().Debug("protocol version changed", slog.Int("newVersion", int(encryptor.GetProtocolVersion())))
 }
 
 type EncryptorStats struct {
@@ -66,19 +71,19 @@ func NewEncryptor() *Encryptor {
 		handle: C.daveEncryptorCreate(),
 	}
 
-	encryptor.cgoHandle = cgo.NewHandle(encryptor)
+	// A weak pointer is necessary here to avoid circular refs
+	encryptor.cgoHandle = cgo.NewHandle(weak.Make(encryptor))
 
 	C.daveEncryptorSetProtocolVersionChangedCallback(
 		encryptor.handle,
 		C.DAVEEncryptorProtocolVersionChangedCallback(C.godaveProtocolVersionChangedCallback),
-		unsafe.Pointer(encryptor.cgoHandle),
+		unsafe.Pointer(&encryptor.cgoHandle),
 	)
-	println(unsafe.Pointer(encryptor.cgoHandle))
 
-	runtime.AddCleanup(encryptor, func(handle encryptionHandle) {
-		C.daveEncryptorDestroy(handle)
-		encryptor.cgoHandle.Delete()
-	}, encryptor.handle)
+	runtime.SetFinalizer(encryptor, func(e *Encryptor) {
+		C.daveEncryptorDestroy(e.handle)
+		e.cgoHandle.Delete()
+	})
 
 	return encryptor
 }

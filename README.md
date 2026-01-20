@@ -13,10 +13,10 @@ GoDave is a library that provides Go bindings for [libdave](https://github.com/d
 
 ## Summary
 1. [Libdave Installation](#libdave-installation)
-2. [Installation Script (Recommended)](#installation-script-recommended)
-3. [Manual Build](#manual-build)
-4. [Example Usage](#example-usage)
-5. [License](#license)
+    1. [Installation Script (Recommended)](#installation-script-recommended)
+    2. [Manual Build](#manual-build)
+2. [Example Usage](#example-usage)
+3. [License](#license)
 
 ## Libdave Installation
 
@@ -25,21 +25,29 @@ to build this library.
 
 > [!NOTE]
 > Due to the nature of this project, it might be necessary to re-install libdave when updating to a new GoDave version.
+>
+> If you have compilation errors, please ensure that you have installed a compatible libdave version.
 > 
 > Versions requiring this will be denoted with a bump in the major version (for reference: major.minor.patch).
 
 ### Installation Script (Recommended)
 
-We provide helpful scripts in [scripts/](https://github.com/disgoorg/godave/tree/master/scripts) to simplify installing
-a compatible libdave version. Grab whichever one is applicable to your OS (`.sh` for Linux and MacOS; `ps1` for
-Windows PowerShell) and (after auditing its contents) run it and follow any instructions it might output.
+We provide helpful [libdave_install.sh](https://github.com/disgoorg/godave/tree/master/scripts/libdave_install.sh) script
+to simplify installing a compatible libdave version. After auditing the contents of the script, run it and follow any
+instructions it might output.
 
-Once that step is complete, you can continue with the installation of GoDave.
+A simple one-liner would be:
+
+```bash
+curl https://raw.githubusercontent.com/disgoorg/godave/refs/heads/master/scripts/libdave_install.sh | bash
+```
+
+Once you have successfully installed the shared libdave library, you can continue with the installation of GoDave.
 
 ### Manual Build
 
 For a manual build, please clone https://github.com/discord/libdave and use revision
-`74979cb33febf4ddef0c2b66e57520b339550c17`.
+`d6874165b9a7c8d2cc59712c7aceaa8dffb189b4`.
 
 > [!NOTE]
 > We provide no guarantees for this version of GoDave to run for other revisions other than that the one mentioned above.
@@ -48,7 +56,7 @@ For a manual build, please clone https://github.com/discord/libdave and use revi
 > GoDave version
 
 Once checked out, please follow the
-[build instructions](https://github.com/discord/libdave/tree/74979cb33febf4ddef0c2b66e57520b339550c17/cpp#building) and
+[build instructions](https://github.com/discord/libdave/tree/d6874165b9a7c8d2cc59712c7aceaa8dffb189b4/cpp#building) and
 setup the appropriate `pkg-config` file and configuration to allow for discovery at compilation time.
 
 ## Example Usage

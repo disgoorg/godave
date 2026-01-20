@@ -1,6 +1,6 @@
 package libdave
 
-// #include "lib/include/dave.h"
+// #include "dave.h"
 import "C"
 import (
 	"runtime"
@@ -53,9 +53,9 @@ func NewDecryptor() *Decryptor {
 		handle: C.daveDecryptorCreate(),
 	}
 
-	runtime.AddCleanup(decryptor, func(handle decryptorHandle) {
-		C.daveDecryptorDestroy(handle)
-	}, decryptor.handle)
+	runtime.SetFinalizer(decryptor, func(d *Decryptor) {
+		C.daveDecryptorDestroy(decryptor.handle)
+	})
 
 	return decryptor
 }

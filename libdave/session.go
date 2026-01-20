@@ -1,7 +1,7 @@
 package libdave
 
 // #include <stdlib.h>
-// #include "lib/include/dave.h"
+// #include "dave.h"
 // extern void godaveGlobalFailureCallback(char* source, char* reason, void* userData);
 // extern void godavePairwiseFingerprintCallback(uint8_t* fingerpint, size_t length, void* userData);
 import "C"
@@ -30,8 +30,15 @@ func godaveGlobalFailureCallback(source *C.char, reason *C.char, userData unsafe
 //export godavePairwiseFingerprintCallback
 func godavePairwiseFingerprintCallback(fingerprint *C.uint8_t, length C.size_t, userData unsafe.Pointer) {
 	h := *(*cgo.Handle)(userData)
-	retChan := *h.Value().(*chan []byte)
-	retChan <- newCBytesMemoryView(fingerprint, length)
+	retChan := h.Value().(chan []byte)
+
+	// Copy the data over into Go land
+	// No need to free the C array, as the library will do it for us
+	view := unsafe.Slice((*byte)(fingerprint), length)
+	slice := make([]byte, length)
+	copy(slice, view)
+
+	retChan <- slice
 }
 
 func NewSession(context string, authSessionID string) *Session {
@@ -50,9 +57,9 @@ func NewSession(context string, authSessionID string) *Session {
 		),
 	}
 
-	runtime.AddCleanup(session, func(handle sessionHandle) {
-		C.daveSessionDestroy(handle)
-	}, session.handle)
+	runtime.SetFinalizer(session, func(s *Session) {
+		C.daveSessionDestroy(s.handle)
+	})
 
 	return session
 }
@@ -83,7 +90,7 @@ func (s *Session) GetLastEpochAuthenticator() []byte {
 	)
 	C.daveSessionGetLastEpochAuthenticator(s.handle, &authenticator, &authenticatorLen)
 
-	return newCBytesMemoryView(authenticator, authenticatorLen)
+	return newByteSlice(authenticator, authenticatorLen)
 }
 
 func (s *Session) SetExternalSender(externalSender []byte) {
@@ -108,7 +115,7 @@ func (s *Session) ProcessProposals(proposals []byte, recognizedUserIDs []string)
 		&welcomeBytesLen,
 	)
 
-	return newCBytesMemoryView(welcomeBytes, welcomeBytesLen)
+	return newByteSlice(welcomeBytes, welcomeBytesLen)
 }
 
 func (s *Session) ProcessCommit(commit []byte) *CommitResult {
@@ -135,7 +142,7 @@ func (s *Session) GetMarshalledKeyPackage() []byte {
 	)
 	C.daveSessionGetMarshalledKeyPackage(s.handle, &keyPackage, &keyPackageLen)
 
-	return newCBytesMemoryView(keyPackage, keyPackageLen)
+	return newByteSlice(keyPackage, keyPackageLen)
 }
 
 func (s *Session) GetKeyRatchet(userID string) *KeyRatchet {

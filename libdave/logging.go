@@ -1,6 +1,6 @@
 package libdave
 
-// #include "lib/include/dave.h"
+// #include "dave.h"
 // extern void godaveGlobalLogCallback(DAVELoggingSeverity severity, char* file, int line, char* message);
 import "C"
 import (
