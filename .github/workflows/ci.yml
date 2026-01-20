@@ -30,12 +30,7 @@ jobs:
         run: |
           go work init . ./libdave ./golibdave
 
-      - name: "[Windows Only] Test libdave"
-        if: matrix.runner == 'windows-latest'
-        run: |
-          go test --ldflags '-linkmode external -extldflags=-static' ./libdave
-
-      - name: "[Others] Test libdave"
+      - name: "Test libdave"
         if: matrix.runner != 'windows-latest'
         run: |
           go test ./libdave
