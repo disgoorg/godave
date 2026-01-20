@@ -28,7 +28,7 @@ jobs:
 
       - name: Install libdave
         run: |
-          bash -c "yes || true" | bash scripts/libdave_install.sh
+          yes | head -n 1 | bash scripts/libdave_install.sh
 
       - name: Test build
         run: |
