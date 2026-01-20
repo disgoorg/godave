@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       should_update: ${{ steps.check.outputs.should_update }}
-      new_sha: ${{ steps.check.outputs.new_sha }}
+      new_version: ${{ steps.check.outputs.new_version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
