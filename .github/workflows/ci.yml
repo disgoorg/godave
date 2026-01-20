@@ -28,7 +28,8 @@ jobs:
 
       - name: Install libdave
         run: |
-          yes | head -n 1 | bash scripts/libdave_install.sh
+          NON_INTERACTIVE=1 bash scripts/libdave_install.sh
+          source "$HOME/.bashrc"
 
       - name: Test build
         run: |

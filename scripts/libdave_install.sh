@@ -7,6 +7,7 @@ VERSION="v1.1.0"
 SSL_FLAVOUR="boringssl"
 REPO="discord/libdave"
 API_URL="https://api.github.com/repos/$REPO/releases/latest"
+NON_INTERACTIVE=${NON_INTERACTIVE:-}
 
 LIB_DIR="$HOME/.local/lib"
 INC_DIR="$HOME/.local/include"
@@ -122,7 +123,12 @@ if [ "$NEEDS_PC" -eq 1 ] || [ "$NEEDS_LIB" -eq 1 ]; then
     [[ "$NEEDS_PC" -eq 1 ]] && echo "    $PC_LINE"
     [[ "$NEEDS_LIB" -eq 1 ]] && echo "    $LIB_LINE"
 
-    read -p "Would you like to add them now? (y/n) " -r
+    if [ -z "$NON_INTERACTIVE" ] ; then
+      read -p "Would you like to add them now? (y/n) " -r
+    else
+      REPLY="y"
+    fi
+    echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         {
             [[ "$NEEDS_PC" -eq 1 ]] && echo "$PC_LINE"
