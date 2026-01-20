@@ -30,9 +30,9 @@ jobs:
         run: |
           go work init . ./libdave ./golibdave
 
-      - name: "[Windows Only] Place lidave.lib in the correct folder"
+      - name: "[Windows Only] Place lidave.lib in PATH"
         run: |
-          cp libdave/lib/build/win_x64/libdave.lib  .
+          cp libdave/lib/build/win_x64/libdave.lib libdave/
 
       - name: Test libdave
         run: |
