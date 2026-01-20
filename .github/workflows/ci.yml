@@ -52,6 +52,8 @@ jobs:
             Linux) export LD_LIBRARY_PATH="$HOME/.local/lib:$LD_LIBRARY_PATH" ;;
             *) export PATH="$HOME/.local/lib:$PATH" ;;
           esac
+          
+          ls "$HOME/.local/lib/pkgconfig"
 
           go build
           go build ./libdave
