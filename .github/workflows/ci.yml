@@ -32,5 +32,5 @@ jobs:
       - name: Test build
         run: |
           go build
-          go build libdave
-          go build golibdave
+          go build ./libdave
+          go build ./golibdave
