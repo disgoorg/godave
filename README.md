@@ -9,55 +9,45 @@
 
 # GoDave
 
-GoDave is a library that provides Go bindings for [libdave](https://github.com/discord/libdave) and provides a generic DAVE interface allowing for different implementations in the future.
+GoDave is a library that provides Go bindings for [libdave](https://github.com/discord/libdave) and provides a generic DAVE interface allowing for
+different implementations in the future.
 
 ## Summary
 1. [Libdave Installation](#libdave-installation)
-    1. [Installation Script (Recommended)](#installation-script-recommended)
-    2. [Manual Build](#manual-build)
 2. [Example Usage](#example-usage)
 3. [License](#license)
 
 ## Libdave Installation
 
-This library uses CGO and dynamic linking to use libdave. As such, it needs to be installed in the system beforehand
-to build this library.
+This library uses CGO and dynamic linking to use libdave. We automatically pull the latest libdave version and link
+against the [shared libraries published by Discord](https://github.com/discord/libdave/releases).
+
+As such, if you are using an operating system and architecture combination which does not have any pre-built libraries,
+you will have to do a bit more tinkering.
+
+If you know CGO, you can manually build and set the correct compiler flags for it to be resolved correctly. For those
+who don't know CGO, don't worry, we have got you covered!
+
+To build libdave, we recommend using our [libdave_build.sh](https://github.com/disgoorg/godave/tree/master/scripts/libdave_build.sh).
+After auditing its contents, you can download it and execute it like this:
+
+```bash
+bash libdave_build.sh <version>
+```
+
+After it is done building, add the following to your `main.go` file:
+
+```go
+// #cgo pkg-config: dave
+import "C"
+```
+
+With this, you should not be able to use libdave.
 
 > [!NOTE]
 > Due to the nature of this project, it might be necessary to re-install libdave when updating to a new GoDave version.
 >
-> If you have compilation errors, please ensure that you have installed a compatible libdave version.
-> 
-> Versions requiring this will be denoted with a bump in the major version (for reference: major.minor.patch).
-
-### Installation Script (Recommended)
-
-We provide helpful [libdave_install.sh](https://github.com/disgoorg/godave/tree/master/scripts/libdave_install.sh) script
-to simplify installing a compatible libdave version. After auditing the contents of the script, run it and follow any
-instructions it might output.
-
-A simple one-liner would be:
-
-```bash
-curl https://raw.githubusercontent.com/disgoorg/godave/refs/heads/master/scripts/libdave_install.sh | bash
-```
-
-Once you have successfully installed the shared libdave library, you can continue with the installation of GoDave.
-
-### Manual Build
-
-For a manual build, please clone https://github.com/discord/libdave and use revision
-`d6874165b9a7c8d2cc59712c7aceaa8dffb189b4`.
-
-> [!NOTE]
-> We provide no guarantees for this version of GoDave to run for other revisions other than that the one mentioned above.
-> 
-> As the library evolves and new versions of libdave are released, the above revision will be updated to match the
-> GoDave version
-
-Once checked out, please follow the
-[build instructions](https://github.com/discord/libdave/tree/d6874165b9a7c8d2cc59712c7aceaa8dffb189b4/cpp#building) and
-setup the appropriate `pkg-config` file and configuration to allow for discovery at compilation time.
+> You can see what version is required by checking [this file](https://github.com/disgoorg/godave/tree/master/libdave/lib/release.txt)
 
 ## Example Usage
 

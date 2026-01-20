@@ -1,7 +1,7 @@
 package libdave
 
 // #include <stdlib.h>
-// #include "dave.h"
+// #include "lib/include/dave.h"
 // extern void godaveGlobalFailureCallback(char* source, char* reason, void* userData);
 // extern void godavePairwiseFingerprintCallback(uint8_t* fingerpint, size_t length, void* userData);
 import "C"

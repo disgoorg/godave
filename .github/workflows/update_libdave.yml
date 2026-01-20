@@ -1,0 +1,77 @@
+name: Update libdave
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Runs at 00:00 UTC every day
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  LIBDAVE_REPO: "discord/libdave"
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      should_update: ${{ steps.check.outputs.should_update }}
+      new_sha: ${{ steps.check.outputs.new_sha }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Remote vs Local SHA
+        id: check
+        run: |
+          # Get the latest release from the remote repository
+          LATEST_RELEASE=$(gh release view --repo "$LIBDAVE_REPO" --json tagName --template '{{.tagName}}')
+          echo "Remote version: $LATEST_RELEASE"
+
+          RELEASE_FILE="libdave/lib/release.txt"
+          LOCAL_RELEASE=""
+
+          if [ -f "$RELEASE_FILE" ]; then
+            LOCAL_SHA=$(cat "$LOCAL_FILE" | tr -d '[:space:]')
+            echo "Local version: $LOCAL_FILE"
+          else
+            echo "Local version file not found."
+          fi
+
+          if [ "$LATEST_RELEASE" != "$LOCAL_FILE" ]; then
+            echo "New version detected. Triggering build"
+            echo "should_update=true" >> "$GITHUB_OUTPUT"
+            echo "new_version=$LATEST_RELEASE" >> "$GITHUB_OUTPUT"
+          else
+            echo "Versions match. No update needed"
+            echo "should_update=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  update-artifacts:
+    needs: check-version
+    if: needs.check-version.outputs.should_update == 'true'
+
+    env:
+      LIBDAVE_RELEASE: ${{ needs.check-version.outputs.new_version }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download release artifacts
+        run: |
+          bash scripts/update-libdave.bash
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update libdave to ${{ env.LIBDAVE_RELEASE }}"
+          branch: update-libdave-${{ env.LIBDAVE_RELEASE }}
+          delete-branch: true
+          title: "chore: update libdave to ${{ env.LIBDAVE_RELEASE }}"
+          body: |
+            Update libdave prebuilt libraries to [${{ env.LIBDAVE_RELEASE }}](https://github.com/${{ env.LIBDAVE_REPO }}/releases/tag/${{ env.LIBDAVE_RELEASE }})
