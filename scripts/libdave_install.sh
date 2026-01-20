@@ -14,6 +14,12 @@ INC_DIR="$HOME/.local/include"
 PC_DIR="$LIB_DIR/pkgconfig"
 PC_FILE="$PC_DIR/dave.pc"
 
+# Set NON_INTERACTIVE if in a non-interactive shell
+case $- in
+    *i*) ;;
+      *) NON_INTERACTIVE=1;;
+esac
+
 # Determine platform and architecture
 PLATFORM=$(uname -s)
 ARCH=$(uname -m)

@@ -37,14 +37,16 @@ jobs:
 
       - name: Install libdave
         run: |
+          # Windows is missing a .bashrc by default
           touch "$HOME/.bashrc"
-          NON_INTERACTIVE=1 bash scripts/libdave_install.sh
+          bash scripts/libdave_install.sh
 
-      # We unfortunately cannot just source the .bashrc because all the `-latest` runners
+      # We unfortunately cannot just source the .bashrc because the `-latest` runners
       # contain a check at the top of the file to not run it if not in an interactive session
       - name: Test build
         run: |
           export PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig:$PKG_CONFIG_PATH"
+
           case "$(uname -s)" in
             Darwin) export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH" ;;
             Linux) export LD_LIBRARY_PATH="$HOME/.local/lib:$LD_LIBRARY_PATH" ;;
