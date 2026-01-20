@@ -30,7 +30,7 @@ jobs:
         run: |
           go work init . ./libdave ./golibdave
 
-      - name: "[Windows only] Add DLL to PATH"
+      - name: "[Windows Only] Add DLL to PATH"
         if: matrix.runner == 'windows-latest'
         run: |
           cp libdave/vendor/bin/win_x64/libdave.dll .

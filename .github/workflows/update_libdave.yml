@@ -54,7 +54,7 @@ jobs:
     if: needs.check-version.outputs.should_update == 'true'
 
     env:
-      LIBDAVE_RELEASE: ${{ needs.check-version.outputs.new_version }}
+      VERSION: ${{ needs.check-version.outputs.new_version }}
 
     runs-on: ubuntu-latest
     steps:
@@ -63,15 +63,15 @@ jobs:
 
       - name: Download release artifacts
         run: |
-          bash scripts/update_libdave.bash "$LIBDAVE_RELEASE"
+          bash scripts/update_libdave.bash "$VERSION"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update libdave to ${{ env.LIBDAVE_RELEASE }}"
-          branch: update-libdave-${{ env.LIBDAVE_RELEASE }}
+          commit-message: "chore: update libdave to ${{ env.VERSION }}"
+          branch: update-libdave-${{ env.VERSION }}
           delete-branch: true
-          title: "chore: update libdave to ${{ env.LIBDAVE_RELEASE }}"
+          title: "chore: update libdave to ${{ env.VERSION }}"
           body: |
-            Update libdave prebuilt libraries to [${{ env.LIBDAVE_RELEASE }}](https://github.com/${{ env.LIBDAVE_REPO }}/releases/tag/${{ env.LIBDAVE_RELEASE }})
+            Update libdave prebuilt libraries to [${{ env.VERSION }}](https://github.com/${{ env.LIBDAVE_REPO }}/releases/tag/${{ env.VERSION }})
