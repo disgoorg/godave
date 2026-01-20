@@ -33,7 +33,6 @@ jobs:
       - name: "[Windows Only] Test libdave"
         if: matrix.runner == 'windows-latest'
         run: |
-          cp libdave/lib/build/win_x64/libdave.lib .
           go test --ldflags '-linkmode external -extldflags=-static' ./libdave
 
       - name: "[Others] Test libdave"
