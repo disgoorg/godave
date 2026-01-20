@@ -26,8 +26,13 @@ jobs:
         with:
           go-version: 1.24
 
+      - name: Setup go.work
+        run: |
+          go work init . ./libdave ./golibdave
+
       - name: Install libdave
         run: |
+          touch ~/.bashrc
           NON_INTERACTIVE=1 bash scripts/libdave_install.sh
           source "$HOME/.bashrc"
 
