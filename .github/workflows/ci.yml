@@ -30,10 +30,10 @@ jobs:
         run: |
           go work init . ./libdave ./golibdave
 
-      - name: "[Windows Only] Place lidave.lib in PATH"
+      - name: "[Windows Only] Test libdave"
         if: matrix.runner == 'windows-latest'
         run: |
-          cp libdave/lib/build/win_x64/libdave.lib libdave/
+          cp libdave/lib/build/win_x64/libdave.lib .
           go test --ldflags '-linkmode external -extldflags=-static' ./libdave
 
       - name: "[Others] Test libdave"
