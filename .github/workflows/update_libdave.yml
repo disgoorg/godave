@@ -12,6 +12,7 @@ permissions:
 
 env:
   LIBDAVE_REPO: "discord/libdave"
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
   check-version:
