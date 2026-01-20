@@ -7,7 +7,7 @@ package libdave
 // #cgo darwin,amd64 LDFLAGS: -L${SRCDIR}/lib/build/macos_x64 -ldave -Wl,-rpath,${SRCDIR}/lib/build/macos_x64
 // #cgo darwin,arm64 LDFLAGS: -L${SRCDIR}/lib/build/macos_arm64 -ldave -Wl,-rpath,${SRCDIR}/lib/build/macos_arm64
 //
-// #cgo windows,amd64 LDFLAGS: -L${SRCDIR}/lib/build/win_x64 -ldave
+// #cgo windows,amd64 LDFLAGS: -L${SRCDIR}/lib/build/win_x64 -ldave -Wl,-rpath,${SRCDIR}/lib/build/win_x64
 // #include "lib/include/dave.h"
 import "C"
 
