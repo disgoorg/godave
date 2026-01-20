@@ -32,8 +32,7 @@ then there is nothing else for you to  do, you can use GoDave directly!
 
 ### Windows instructions
 
-If you are using Windows, the binaries provided by Discord are actually a static library, so you will have to download
-and extract the `libdave.lib` and place it next to your final executable.
+Windows support is still not fully functional and will come in a future.
 
 ### Manual Installation
 If you know CGO, you can manually build and set the correct compiler flags for it to be resolved correctly. For those

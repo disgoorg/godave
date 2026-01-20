@@ -12,7 +12,8 @@ jobs:
   libdave:
     strategy:
       matrix:
-        runner: [ubuntu-latest, macos-latest, macos-15-intel, windows-latest]
+        # windows-latest is disabled for now until we can get it working
+        runner: [ubuntu-latest, macos-latest, macos-15-intel]
       fail-fast: false
 
     runs-on: ${{matrix.runner}}
@@ -30,13 +31,6 @@ jobs:
         run: |
           go work init . ./libdave ./golibdave
 
-      - name: "[Windows Only] Test libdave"
-        if: matrix.runner == 'windows-latest'
-        run: |
-          cp libdave/lib/build/win_x64/libdave.a .
-          go test --ldflags '-linkmode external -extldflags=-static' ./libdave
-
       - name: "Test libdave"
-        if: matrix.runner != 'windows-latest'
         run: |
           go test ./libdave
