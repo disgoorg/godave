@@ -33,7 +33,7 @@ jobs:
       - name: "[Windows Only] Add DLL to PATH"
         if: matrix.runner == 'windows-latest'
         run: |
-          cp libdave/vendor/bin/win_x64/libdave.dll .
+          cp libdave/vendor/bin/win_x64/libdave.dll libdave/
 
       - name: Test libdave
         run: |
