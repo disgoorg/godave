@@ -1,6 +1,6 @@
 package libdave
 
-// #include "lib/include/dave.h"
+// #include "vendor/include/dave.h"
 import "C"
 import (
 	"runtime"
