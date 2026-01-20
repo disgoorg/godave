@@ -12,8 +12,7 @@ jobs:
   libdave:
     strategy:
       matrix:
-        # windows-latest is disabled for now until we can get it working
-        runner: [ubuntu-latest, macos-latest, macos-15-intel]
+        runner: [ubuntu-latest, macos-latest, macos-15-intel, windows-latest]
       fail-fast: false
 
     runs-on: ${{matrix.runner}}
@@ -32,8 +31,9 @@ jobs:
           go work init . ./libdave ./golibdave
 
       - name: "[Windows only] Add DLL to PATH"
+        if: matrix.runner == 'windows-latest'
         run: |
-          cp libdave/lib/bin/win_x64/libdave.dll .
+          cp libdave/vendor/bin/win_x64/libdave.dll .
 
       - name: Test libdave
         run: |
