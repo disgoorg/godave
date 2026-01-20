@@ -30,6 +30,11 @@ jobs:
         run: |
           go work init . ./libdave ./golibdave
 
+      - name: "[Windows Only] Place lib in PATH"
+        if: matrix.runner == 'windows-latest'
+        run: |
+          cp libdave/lib/build/win_x64/libdave.a .
+
       - name: "Test libdave"
         run: |
           go test ./libdave
