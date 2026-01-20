@@ -64,7 +64,7 @@ jobs:
 
       - name: Download release artifacts
         run: |
-          bash scripts/update_libdave.bash "$VERSION"
+          bash scripts/update_libdave.sh "$VERSION"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
