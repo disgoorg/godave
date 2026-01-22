@@ -47,9 +47,11 @@ jobs:
 
       - name: Test libdave
         run: |
-          if [ "$RUNNER_OS" != "Windows" ]; then
-              # Windows will already have the environment variables set
+          if [ "$RUNNER_OS" == "Windows" ]; then
+              export PATH="$LOCALAPPDATA/libdave/bin:$PATH"
+              export PKG_CONFIG_PATH="$LOCALAPPDATA/pkgconfig:$PKG_CONFIG_PATH"
+          else
               export PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig:$PKG_CONFIG_PATH"
-          fi
+          then
 
           go test ./libdave
