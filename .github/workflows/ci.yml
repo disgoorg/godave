@@ -33,17 +33,18 @@ jobs:
         run: |
           go work init . ./libdave ./golibdave
 
+      - name: "[Windows Only] Install pkgconfiglite"
+        if: runner.os == 'Windows'
+        run: choco install pkgconfiglite
+
       - name: Install libdave
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
               pwsh ./scripts/libdave_install.ps1 "$LIBDAVE_VERSION"
+              echo "$LOCALAPPDATA/libdave/bin" >> "$GITHUB_PATH"
           else
               ./scripts/libdave_install.sh "$LIBDAVE_VERSION"
           fi
-
-      - name: "[Windows Only] Install pkgconfiglite"
-        if: runner.os == 'Windows'
-        run: choco install pkgconfiglite
 
       - name: Test libdave
         run: |
