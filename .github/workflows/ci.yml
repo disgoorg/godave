@@ -8,6 +8,9 @@ defaults:
   run:
     shell: bash
 
+env:
+  LIBDAVE_VERSION: v1.1.0
+
 jobs:
   libdave:
     strategy:
@@ -33,9 +36,9 @@ jobs:
       - name: Install libdave
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
-              pwsh ./scripts/libdave_install.ps1
+              pwsh ./scripts/libdave_install.ps1 "$LIBDAVE_VERSION"
           else
-              ./scripts/libdave_install.sh
+              ./scripts/libdave_install.sh "$LIBDAVE_VERSION"
           fi
 
       - name: "[Windows Only] Install pkgconfiglite"
