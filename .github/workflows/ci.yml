@@ -48,7 +48,6 @@ jobs:
       - name: Test libdave
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-              export Path="$LOCALAPPDATA/libdave/bin;$Path"
               export PKG_CONFIG_PATH="$LOCALAPPDATA/pkgconfig;$PKG_CONFIG_PATH"
           else
               export PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig:$PKG_CONFIG_PATH"
