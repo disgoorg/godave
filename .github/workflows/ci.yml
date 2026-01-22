@@ -52,6 +52,6 @@ jobs:
               export PKG_CONFIG_PATH="$LOCALAPPDATA/pkgconfig:$PKG_CONFIG_PATH"
           else
               export PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig:$PKG_CONFIG_PATH"
-          then
+          fi
 
           go test ./libdave
