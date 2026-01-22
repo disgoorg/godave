@@ -50,8 +50,6 @@ jobs:
           if [ "$RUNNER_OS" != "Windows" ]; then
               # Windows will already have the environment variables set
               export PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig:$PKG_CONFIG_PATH"
-              export LD_LIBRARY_PATH="$HOME/.local/lib:$LD_LIBRARY_PATH"
-              export LD_LIBRARY_PATH="$HOME/.local/lib:$LD_LIBRARY_PATH"
           fi
 
           go test ./libdave

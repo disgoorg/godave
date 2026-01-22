@@ -135,7 +135,7 @@ Name: dave
 Description: Discord Audio & Video End-to-End Encryption (DAVE) Protocol
 Version: $VERSION
 URL: $LIBDAVE_REPO
-Libs: -L\${libdir} -ldave
+Libs: -L\${libdir} -ldave -Wl,-rpath,\${libdir}
 Cflags: -I\${includedir}
 EOF
 }
@@ -147,34 +147,27 @@ update_shell_profile() {
     esac
 
     pc_line="export PKG_CONFIG_PATH=\"\$HOME/.local/lib/pkgconfig:\$PKG_CONFIG_PATH\""
-    lib_line="export $LIB_VAR=\"\$HOME/.local/lib:\$$LIB_VAR\""
-    path_line="export \$PATH=\"\$HOME/.local/path:\$PATH\""
+    path_line="export PATH=\"\$HOME/.local/path:\$PATH\""
 
     # Use grep -F for fixed string matching
     needs_pc=0;
-    needs_lib=0
     needs_path=0;
     if [ -f "$profile" ]; then
         grep -qF "$pc_line" "$profile" || needs_pc=1
         if [ "$OS" = "win" ]; then
             grep -qF "$path_line" "$profile" || needs_path=1
-        else
-            grep -qF "$lib_line" "$profile" || needs_lib=1
         fi
     else
         needs_pc=1
         if [ "$OS" = "win" ]; then
             needs_path=1
-        else
-            needs_lib=1
         fi
     fi
 
-    if [ "$needs_pc" -eq 1 ] || [ "$needs_lib" -eq 1 ]; then
+    if [ "$needs_pc" -eq 1 ] || [ "$needs_path" -eq 1 ]; then
         printf "\n--- Action Required ---\n"
         printf "Add these to %s:\n" "$profile"
         [ "$needs_pc" -eq 1 ] && printf "    %s\n" "$pc_line"
-        [ "$needs_lib" -eq 1 ] && printf "    %s\n" "$lib_line"
         [ "$needs_path" -eq 1 ] && printf "    %s\n" "$path_line"
 
         if [ -z "$NON_INTERACTIVE" ]; then
@@ -184,7 +177,6 @@ update_shell_profile() {
                 [Yy]*)
                     {
                         [ "$needs_pc" -eq 1 ] && printf "%s\n" "$pc_line"
-                        [ "$needs_lib" -eq 1 ] && printf "%s\n" "$lib_line"
                         [ "$needs_path" -eq 1 ] && printf "%s\n" "$path_line"
                     } >> "$PROFILE_FILE"
                     log "Profile updated."
