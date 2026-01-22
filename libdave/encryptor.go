@@ -1,6 +1,6 @@
 package libdave
 
-// #include "vendor/include/dave.h"
+// #include "dave.h"
 // extern void godaveProtocolVersionChangedCallback(void* userData);
 import "C"
 import (

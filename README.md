@@ -21,6 +21,8 @@ different implementations in the future.
 
 ## Libdave Installation
 
+# FIXME: Needs rewriting
+
 This library uses CGO and dynamic linking to use libdave. We automatically pull the latest libdave version and link
 against the [shared libraries published by Discord](https://github.com/discord/libdave/releases).
 
@@ -44,7 +46,7 @@ To build libdave, we recommend using our [libdave_build.sh](https://github.com/d
 After auditing its contents, you can download it and execute it like this:
 
 ```bash
-bash libdave_build.sh <version>
+bash libdave_install.sh <version>
 ```
 
 After it is done building, add the following to your `main.go` file:
