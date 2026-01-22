@@ -24,14 +24,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check Remote vs Local SHA
+      - name: Check for new version
         id: check
         run: |
           # Get the latest release from the remote repository
           LATEST_RELEASE=$(gh release view --repo "$LIBDAVE_REPO" --json tagName --template '{{.tagName}}')
           echo "Remote version: $LATEST_RELEASE"
 
-          RELEASE_FILE="libdave/lib/release.txt"
+          RELEASE_FILE="libdave/vendor/release.txt"
           LOCAL_RELEASE=""
 
           if [ -f "$RELEASE_FILE" ]; then
