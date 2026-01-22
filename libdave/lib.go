@@ -3,6 +3,7 @@ package libdave
 // FIXME: Consider https://pkg.go.dev/cmd/cgo#hdr-Optimizing_calls_of_C_code
 
 // #cgo linux,amd64 LDFLAGS: -L${SRCDIR}/vendor/lib/linux_x64 -ldave -Wl,-rpath,${SRCDIR}/vendor/lib/linux_x64
+// #cgo linux,arm64 LDFLAGS: -L${SRCDIR}/vendor/lib/linux_arm64 -ldave -Wl,-rpath,${SRCDIR}/vendor/lib/linux_arm64
 //
 // #cgo darwin,amd64 LDFLAGS: -L${SRCDIR}/vendor/lib/macos_x64 -ldave -Wl,-rpath,${SRCDIR}/vendor/lib/macos_x64
 // #cgo darwin,arm64 LDFLAGS: -L${SRCDIR}/vendor/lib/macos_arm64 -ldave -Wl,-rpath,${SRCDIR}/vendor/lib/macos_arm64
