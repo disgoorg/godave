@@ -178,7 +178,7 @@ update_shell_profile() {
                     {
                         [ "$needs_pc" -eq 1 ] && printf "%s\n" "$pc_line"
                         [ "$needs_path" -eq 1 ] && printf "%s\n" "$path_line"
-                    } >> "$PROFILE_FILE"
+                    } >> "$profile"
                     log "Profile updated."
                     ;;
             esac
