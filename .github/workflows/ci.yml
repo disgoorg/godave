@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  LIBDAVE_VERSION: v1.1.0
+
+jobs:
+  libdave:
+    strategy:
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest]
+      fail-fast: false
+
+    runs-on: ${{matrix.runner}}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24
+
+      - name: Setup go.work
+        run: |
+          go work init . ./libdave ./golibdave
+
+      - name: "[Windows Only] Install pkgconfiglite"
+        if: runner.os == 'Windows'
+        run: choco install pkgconfiglite
+
+      - name: Install libdave
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+              pwsh ./scripts/libdave_install.ps1 "$LIBDAVE_VERSION"
+              echo "$LOCALAPPDATA/libdave/bin" >> "$GITHUB_PATH"
+          else
+              ./scripts/libdave_install.sh "$LIBDAVE_VERSION"
+          fi
+
+      - name: Test libdave
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+              export PKG_CONFIG_PATH="$LOCALAPPDATA/pkgconfig;$PKG_CONFIG_PATH"
+          else
+              export PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig:$PKG_CONFIG_PATH"
+          fi
+
+          go test ./libdave

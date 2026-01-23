@@ -13,9 +13,9 @@ type KeyRatchet struct {
 func newKeyRatchet(handle keyRatchetHandle) *KeyRatchet {
 	keyRatchet := &KeyRatchet{handle: handle}
 
-	runtime.AddCleanup(keyRatchet, func(handle keyRatchetHandle) {
-		C.daveKeyRatchetDestroy(handle)
-	}, keyRatchet.handle)
+	runtime.SetFinalizer(keyRatchet, func(k *KeyRatchet) {
+		C.daveKeyRatchetDestroy(k.handle)
+	})
 
 	return keyRatchet
 }

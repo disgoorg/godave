@@ -4,7 +4,6 @@ package libdave
 // #include <stdint.h>
 import "C"
 import (
-	"runtime"
 	"unsafe"
 )
 
@@ -23,36 +22,28 @@ func stringSliceToC(strings []string) (**C.char, func()) {
 	return &cArray[0], freeFunc
 }
 
-// IMPORTANT: The cArray pointer passed here should not be used after this function to prevent a use-after-free
-func newCBytesMemoryView(cArray *C.uint8_t, length C.size_t) []byte {
-	// A bit of a hacky solution, but this allows tracking the underlying C allocated
-	// memory with the Go slice, and cleaning it all up when it falls out of scope
-	if length == 0 {
-		return nil
-	}
+// IMPORTANT: This function will free the underlying C memory, so cArray becomes unsafe to use
+// after this function call
+func newByteSlice(cArray *C.uint8_t, length C.size_t) []byte {
+	view := unsafe.Slice((*byte)(cArray), length)
 
-	slice := unsafe.Slice((*byte)(cArray), length)
+	slice := make([]byte, length)
+	copy(slice, view)
 
-	runtime.AddCleanup(&slice, func(cArray *C.uint8_t) {
-		C.free(unsafe.Pointer(cArray))
-	}, cArray)
+	C.free(unsafe.Pointer(cArray))
 
 	return slice
 }
 
-// IMPORTANT: The cArray pointer passed here should not be used after this function to prevent a use-after-free
-func newCUint64MemoryView(cArray *C.uint64_t, length C.size_t) []uint64 {
-	// A bit of a hacky solution, but this allows tracking the underlying C allocated
-	// memory with the Go slice, and cleaning it all up when it falls out of scope
-	if length == 0 {
-		return nil
-	}
+// IMPORTANT: This function will free the underlying C memory, so cArray becomes unsafe to use
+// after this function call
+func newUint64Slice(cArray *C.uint64_t, length C.size_t) []uint64 {
+	view := unsafe.Slice((*uint64)(cArray), length)
 
-	slice := unsafe.Slice((*uint64)(cArray), length)
+	slice := make([]uint64, length)
+	copy(slice, view)
 
-	runtime.AddCleanup(&slice, func(cArray *C.uint64_t) {
-		C.free(unsafe.Pointer(cArray))
-	}, cArray)
+	C.free(unsafe.Pointer(cArray))
 
 	return slice
 }

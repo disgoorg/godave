@@ -9,47 +9,59 @@
 
 # GoDave
 
-GoDave is a library that provides Go bindings for [libdave](https://github.com/discord/libdave) and provides a generic DAVE interface allowing for different implementations in the future.
+GoDave is a library that provides Go bindings for [libdave](https://github.com/discord/libdave) and provides a generic DAVE interface allowing for
+different implementations in the future.
 
 ## Summary
 1. [Libdave Installation](#libdave-installation)
-2. [Installation Script (Recommended)](#installation-script-recommended)
-3. [Manual Build](#manual-build)
-4. [Example Usage](#example-usage)
-5. [License](#license)
+   1. [Windows Installation](#windows-instructions)
+   2. [Installing manually](#manual-installation)
+2. [Example Usage](#example-usage)
+3. [License](#license)
 
 ## Libdave Installation
 
-This library uses CGO and dynamic linking to use libdave. As such, it needs to be installed in the system beforehand
-to build this library.
+# FIXME: Needs rewriting
+
+This library uses CGO and dynamic linking to use libdave. We automatically pull the latest libdave version and link
+against the [shared libraries published by Discord](https://github.com/discord/libdave/releases).
+
+As such, if you are using an operating system and architecture combination which does not have any pre-built libraries,
+you will have to do a bit more tinkering (see bellow)
+
+If you are using an operating system which is covered under the releases provided by Discord (and you are not on Windows)
+then there is nothing else for you to  do, you can use GoDave directly!
+
+### Windows instructions
+
+Windows requires an extra step to get GoDave working. You will have to grab the DLL for your platform from
+[libdave/vendor/bin](https://github.com/disgoorg/godave/tree/master/libdave/vendor/bin/) and place it somewhere in your
+PATH for Windows to resolve it. The easiest way to do this it to place it next to your executable before you run it.
+
+### Manual Installation
+If you know CGO, you can manually build and set the correct compiler flags for it to be resolved correctly. For those
+who don't know CGO, don't worry, we have got you covered!
+
+To build libdave, we recommend using our [libdave_build.sh](https://github.com/disgoorg/godave/tree/master/scripts/libdave_build.sh).
+After auditing its contents, you can download it and execute it like this:
+
+```bash
+bash libdave_install.sh <version>
+```
+
+After it is done building, add the following to your `main.go` file:
+
+```go
+// #cgo pkg-config: dave
+import "C"
+```
+
+With this, you should now be able to use libdave.
 
 > [!NOTE]
 > Due to the nature of this project, it might be necessary to re-install libdave when updating to a new GoDave version.
-> 
-> Versions requiring this will be denoted with a bump in the major version (for reference: major.minor.patch).
-
-### Installation Script (Recommended)
-
-We provide helpful scripts in [scripts/](https://github.com/disgoorg/godave/tree/master/scripts) to simplify installing
-a compatible libdave version. Grab whichever one is applicable to your OS (`.sh` for Linux and MacOS; `ps1` for
-Windows PowerShell) and (after auditing its contents) run it and follow any instructions it might output.
-
-Once that step is complete, you can continue with the installation of GoDave.
-
-### Manual Build
-
-For a manual build, please clone https://github.com/discord/libdave and use revision
-`74979cb33febf4ddef0c2b66e57520b339550c17`.
-
-> [!NOTE]
-> We provide no guarantees for this version of GoDave to run for other revisions other than that the one mentioned above.
-> 
-> As the library evolves and new versions of libdave are released, the above revision will be updated to match the
-> GoDave version
-
-Once checked out, please follow the
-[build instructions](https://github.com/discord/libdave/tree/74979cb33febf4ddef0c2b66e57520b339550c17/cpp#building) and
-setup the appropriate `pkg-config` file and configuration to allow for discovery at compilation time.
+>
+> You can see what version is required by checking [this file](https://github.com/disgoorg/godave/tree/master/libdave/lib/release.txt)
 
 ## Example Usage
 
