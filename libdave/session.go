@@ -20,10 +20,13 @@ type Session struct {
 
 //export godaveGlobalFailureCallback
 func godaveGlobalFailureCallback(source *C.char, reason *C.char, userData unsafe.Pointer) {
+	h := *(*cgo.Handle)(userData)
+	authSessionID := h.Value().(string)
+
 	defaultLogger.Load().Error(
 		C.GoString(reason),
 		slog.String("source", C.GoString(source)),
-		slog.String("authSessionID", C.GoString((*C.char)(userData))),
+		slog.String("authSessionID", authSessionID),
 	)
 }
 
@@ -48,17 +51,20 @@ func NewSession(context string, authSessionID string) *Session {
 	cAuthSessionID := C.CString(authSessionID)
 	defer C.free(unsafe.Pointer(cAuthSessionID))
 
+	authSessionIDHandler := cgo.NewHandle(authSessionID)
+
 	session := &Session{
 		handle: C.daveSessionCreate(
 			unsafe.Pointer(cContext),
 			cAuthSessionID,
 			C.DAVEMLSFailureCallback(unsafe.Pointer(C.godaveGlobalFailureCallback)),
-			unsafe.Pointer(cAuthSessionID),
+			unsafe.Pointer(&authSessionIDHandler),
 		),
 	}
 
 	runtime.SetFinalizer(session, func(s *Session) {
 		C.daveSessionDestroy(s.handle)
+		authSessionIDHandler.Delete()
 	})
 
 	return session
