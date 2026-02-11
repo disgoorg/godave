@@ -9,47 +9,68 @@
 
 # GoDave
 
-GoDave is a library that provides Go bindings for [libdave](https://github.com/discord/libdave) and provides a generic DAVE interface allowing for different implementations in the future.
+GoDave is a library that provides Go bindings for [libdave](https://github.com/discord/libdave) and provides a generic DAVE interface allowing for
+different implementations in the future.
 
 ## Summary
+
 1. [Libdave Installation](#libdave-installation)
-2. [Installation Script (Recommended)](#installation-script-recommended)
-3. [Manual Build](#manual-build)
-4. [Example Usage](#example-usage)
-5. [License](#license)
+   1. [Windows Installation](#windows-instructions)
+   2. [Installing manually](#manual-installation)
+2. [Example Usage](#example-usage)
+3. [License](#license)
 
 ## Libdave Installation
 
-This library uses CGO and dynamic linking to use libdave. As such, it needs to be installed in the system beforehand
-to build this library.
+# FIXME: Needs rewriting
+
+This library uses CGO and dynamic linking to use libdave. We automatically pull the latest libdave version and link
+against the [shared libraries published by Discord](https://github.com/discord/libdave/releases).
+
+We provide helpful scripts under [scripts/](https://github.com/disgoorg/godave/tree/master/scripts) to allow you to
+download pre-built binaries of build them yourself, depending on your needs. Please audit them before executing!
 
 > [!NOTE]
 > Due to the nature of this project, it might be necessary to re-install libdave when updating to a new GoDave version.
-> 
-> Versions requiring this will be denoted with a bump in the major version (for reference: major.minor.patch).
+> The version that require this may be indicated with a minor bump (for reference: `mayor.minor.patch`).
+>
+> You can see what version is required by checking [this file](https://github.com/disgoorg/godave/tree/master/libdave/release.txt)
 
-### Installation Script (Recommended)
+### Linux/MacOS/WSL instructions
 
-We provide helpful scripts in [scripts/](https://github.com/disgoorg/godave/tree/master/scripts) to simplify installing
-a compatible libdave version. Grab whichever one is applicable to your OS (`.sh` for Linux and MacOS; `ps1` for
-Windows PowerShell) and (after auditing its contents) run it and follow any instructions it might output.
+Open a terminal and execute the following commands:
 
-Once that step is complete, you can continue with the installation of GoDave.
+```bash
+# Set CC/CXX variables to change the compiler used (ie, for clang
+#export CC=/usr/bin/clang CXX=/usr/bin/clang
 
-### Manual Build
+./libdave_install.sh v1.1.0
+```
 
-For a manual build, please clone https://github.com/discord/libdave and use revision
-`74979cb33febf4ddef0c2b66e57520b339550c17`.
+### MUSL Linux
 
-> [!NOTE]
-> We provide no guarantees for this version of GoDave to run for other revisions other than that the one mentioned above.
-> 
-> As the library evolves and new versions of libdave are released, the above revision will be updated to match the
-> GoDave version
+If you want to build a MUSL version of libdave, you can execute the following commands:
 
-Once checked out, please follow the
-[build instructions](https://github.com/discord/libdave/tree/74979cb33febf4ddef0c2b66e57520b339550c17/cpp#building) and
-setup the appropriate `pkg-config` file and configuration to allow for discovery at compilation time.
+```bash
+export VCPKG_FORCE_SYSTEM_BINARIES=1
+export CC=/usr/bin/gcc CXX=/usr/bin/g++
+export CXXFLAGS="-Wno-error=maybe-uninitialized"
+
+# Install necessary packages
+apk add build-base cmake ninja zip unzip curl git pkgconfig perl nams go
+
+# FORCE_BUILD=1 as Discord do not provide pre-built binaries
+FORCE_BUILD=1 ./libdave_install.sh v1.1.0
+```
+
+### Windows instructions
+
+Open Powershell and execute the following commands:
+
+```ps1
+Set-ExecutionPolicy RemoteSigned –Scope Process
+.\libdave_install.ps1 v1.1.0
+```
 
 ## Example Usage
 

@@ -1,68 +1,174 @@
+# libdave-install.ps1
+# Usage: .\libdave-install.ps1 -Version "v0.0.1"
+
+[CmdletBinding(PositionalBinding=$false)]
+param (
+    [Parameter(Mandatory=$true, Position=0)]
+    [string]$Version,
+    [switch]$ForceBuild,
+    [string]$SslFlavour = "boringssl"
+)
+
 $ErrorActionPreference = "Stop"
 
-# Check Dependencies
-$requiredCmds = @("git", "make", "cmake")
-foreach ($cmd in $requiredCmds) {
-    if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
-        Write-Error "Error: $cmd is not installed. Please install it and try again."
-        exit 1
+# --- Configuration ---
+$RepoOwner = "discord"
+$RepoName = "libdave"
+$LibDaveRepo = "https://github.com/$RepoOwner/$RepoName"
+
+$InstallBase = Join-Path $env:LOCALAPPDATA "libdave"
+$BinDir = Join-Path $InstallBase "bin"
+$LibDir = Join-Path $InstallBase "lib"
+$IncDir = Join-Path $InstallBase "include"
+$PcDir = Join-Path $env:LOCALAPPDATA "pkgconfig"
+$PcFile = Join-Path $PcDir "dave.pc"
+
+function Log-Info ([string]$Msg) { Write-Host "-> $Msg" -ForegroundColor Cyan }
+
+function Check-Dependencies {
+    $deps = @("git", "make", "cmake")
+    foreach ($cmd in $deps) {
+        if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
+            Write-Error "Missing dependency: $cmd. Please install it via winget or choco."
+        }
     }
 }
 
-$LIBDAVE_REPO = "https://github.com/discord/libdave"
-$LIBDAVE_SHA = "74979cb33febf4ddef0c2b66e57520b339550c17"
+function Get-Environment {
+    $arch = switch ($env:PROCESSOR_ARCHITECTURE) {
+        "AMD64"   { "X64" }
+        "ARM64"   { "ARM64" }
+        Default   { $_ }
+    }
+    return @{ Arch = $arch }
+}
 
-$INSTALL_ROOT = Join-Path $HOME ".local"
-$LIB_DIR = Join-Path $INSTALL_ROOT "lib"
-$INC_DIR = Join-Path $INSTALL_ROOT "include"
-$PC_DIR = Join-Path $LIB_DIR "pkgconfig"
-$PC_FILE = Join-Path $PC_DIR "dave.pc"
+function Install-Prebuilt {
+    param($Tag, $Env)
+    $AssetPattern = "libdave-Windows-$($Env.Arch)-$SslFlavour.zip"
+    $DownloadUrl = "$LibDaveRepo/releases/download/$Tag/$AssetPattern"
+    $TempZip = Join-Path $env:TEMP "libdave_prebuilt.zip"
 
-$TEMP_DIR = Join-Path $env:TEMP "libdave_build"
-if (Test-Path $TEMP_DIR) { Remove-Item -Recurse -Force $TEMP_DIR }
-New-Item -ItemType Directory -Path $TEMP_DIR | Out-Null
+    Log-Info "Checking for prebuilt asset at: $DownloadUrl"
 
-Write-Host "-> Cloning repository"
-Set-Location $TEMP_DIR
-git clone $LIBDAVE_REPO libdave
-Set-Location libdave/cpp
-git checkout $LIBDAVE_SHA
+    try {
+        Invoke-WebRequest -Uri $DownloadUrl -OutFile $TempZip -UseBasicParsing
+    } catch {
+        Log-Info "No prebuilt asset found. Falling back to build."
+        return $false
+    }
 
-git submodule update --init --recursive
-.\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+    Log-Info "Found prebuilt asset. Extracting..."
 
-Write-Host "-> Building shared library"
-make shared
+    if (-not (Test-Path $InstallBase)) { New-Item -ItemType Directory -Path $InstallBase }
 
-Write-Host "-> Installing files"
-if (-not (Test-Path $LIB_DIR)) { New-Item -ItemType Directory -Path $LIB_DIR }
-if (-not (Test-Path $INC_DIR)) { New-Item -ItemType Directory -Path $INC_DIR }
-if (-not (Test-Path $PC_DIR)) { New-Item -ItemType Directory -Path $PC_DIR }
+    Expand-Archive -Path $TempZip -DestinationPath "$env:TEMP\libdave_stage" -Force
 
-Copy-Item "build\Release\dave.dll" -Destination $LIB_DIR
-Copy-Item "build\Release\dave.lib" -Destination $LIB_DIR
-Copy-Item "includes\dave.h" -Destination $INC_DIR
+    # Copy specific files to the install directories
+    Remove-Item $InstallBase -Recurse
+    New-Item -ItemType Directory -Path $BinDir, $LibDir, $IncDir -Force | Out-Null
+    Copy-Item "$env:TEMP\libdave_stage\include\dave\dave.h" -Destination $IncDir -Recurse
+    Copy-Item "$env:TEMP\libdave_stage\bin\libdave.dll" -Destination $BinDir
+    Copy-Item "$env:TEMP\libdave_stage\lib\libdave.lib" -Destination $LibDir
 
-Write-Host "-> Generating pkg-config metadata"
-$PC_CONTENT = @"
-prefix=$($INSTALL_ROOT.Replace('\', '/'))
-exec_prefix=\${prefix}
-libdir=\${prefix}/lib
-includedir=\${prefix}/include
+    Remove-Item $TempZip -Force
+    return $true
+}
+
+function Build-Manual {
+    param($Ref)
+    Log-Info "Starting manual build process for ref: $Ref ($SslFlavour)"
+    Check-Dependencies
+
+    $WorkDir = Join-Path $env:TEMP "libdave_build_$(New-Guid)"
+    New-Item -ItemType Directory -Path $WorkDir | Out-Null
+
+    git clone $LibDaveRepo $WorkDir
+    $CurrentDir = Get-Location
+    Set-Location (Join-Path $WorkDir "cpp")
+
+    git checkout $Ref
+    git submodule update --init --recursive
+
+    Log-Info "Bootstrapping vcpkg..."
+    .\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+
+    Log-Info "Compiling shared library..."
+    make shared "SSL=$SslFlavour" BUILD_TYPE=Release
+
+    Log-Info "Installing..."
+
+    Remove-Item $InstallBase -Recurse
+    New-Item -ItemType Directory -Path $BinDir, $LibDir, $IncDir -Force | Out-Null
+    Copy-Item "includes\dave\dave.h" -Destination $IncDir
+    Copy-Item "build\Release\libdave.dll" -Destination $BinDir
+    Copy-Item "build\Release\libdave.lib" -Destination $LibDir
+
+    Set-Location $CurrentDir
+    Remove-Item $WorkDir -Recurse -Force
+}
+
+function Generate-PkgConfig {
+    Log-Info "Generating pkg-config metadata..."
+
+    if (-not (Test-Path $PcDir)) { New-Item -ItemType Directory -Path $PcDir -Force | Out-Null }
+
+    # We use forward slashes for the .pc file as many pkg-config tools
+    # on Windows (like those in MSYS2/Cygwin) prefer them.
+    $Prefix = $InstallBase.Replace('\', '/')
+
+    # For some reason, pkgconfiglite doesnt't like variables, so always expand $Prefix for now until a fix is found
+    $PcContent = @"
+prefix=$Prefix
+exec_prefix=$Prefix/bin
+libdir=$Prefix/lib
+includedir=$Prefix/include
 
 Name: dave
 Description: Discord Audio & Video End-to-End Encryption (DAVE) Protocol
-Version: $LIBDAVE_SHA
-URL: $LIBDAVE_REPO
-Libs: -L\${libdir} -ldave
-Cflags: -I\${includedir}
+Version: $Version
+URL: $LibDaveRepo
+Libs: -L`${libdir} -ldave
+Cflags: -I`${includedir}
 "@
-$PC_CONTENT | Out-File -Encoding ascii $PC_FILE
 
-Write-Host "-> Cleaning up"
-Set-Location $HOME
-Remove-Item -Recurse -Force $TEMP_DIR
+    Out-File -FilePath $PcFile -InputObject $PcContent -Encoding UTF8
+    Log-Info "Created $PcFile"
+}
 
-Write-Host "--- Installation Complete ---"
-Write-Host "Add $LIB_DIR to your PATH environment variable."
-Write-Host "Set PKG_CONFIG_PATH to $PC_DIR"
+function Update-EnvironmentVariables {
+    Log-Info "Updating User PATH..."
+    $CurrentPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    if ($CurrentPath -notlike "*$BinDir*") {
+        [Environment]::SetEnvironmentVariable("Path", "$BinDir;$CurrentPath", "User")
+    }
+
+    Log-Info "Updating PKG_CONFIG_PATH..."
+    $CurrentPkgPath = [Environment]::GetEnvironmentVariable("PKG_CONFIG_PATH", "User")
+    if ($CurrentPkgPath -notlike "*$PcDir*") {
+        $NewPkgPath = if ([string]::IsNullOrEmpty($CurrentPkgPath)) { $PcDir } else { "$PcDir;$CurrentPkgPath" }
+        [Environment]::SetEnvironmentVariable("PKG_CONFIG_PATH", $NewPkgPath, "User")
+    }
+}
+
+
+# --- Main Logic ---
+$CurrentDir = Get-Location
+try {
+    $EnvInfo = Get-Environment
+    $IsSha = $Version -match "^[0-9a-fA-F]{7,40}$"
+    $BuildRef = if ($IsSha) { $Version } else { "$($Version.Replace('/cpp',''))/cpp" }
+
+    if ($IsSha -or $ForceBuild) {
+        Build-Manual -Ref $BuildRef
+    } else {
+        $Success = Install-Prebuilt -Tag $BuildRef -Env $EnvInfo
+        if (-not $Success) { Build-Manual -Ref $BuildRef }
+    }
+
+    Generate-PkgConfig
+    Update-EnvironmentVariables
+    Log-Info "Installation successful: libdave $Version ($($EnvInfo.Arch))"
+} finally {
+    Set-Location $CurrentDir
+}

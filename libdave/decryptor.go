@@ -19,8 +19,8 @@ const (
 
 func (r decryptorResultCode) ToError() error {
 	switch r {
-	case decryptorResultCodeDecryptionFailure:
-		return ErrDecryptionFailure
+	case decryptorResultCodeSuccess:
+		return nil
 	case decryptorResultCodeMissingKeyRatchet:
 		return ErrMissingKeyRatchet
 	case decryptorResultCodeInvalidNonce:
@@ -28,7 +28,7 @@ func (r decryptorResultCode) ToError() error {
 	case decryptorResultCodeMissingCryptor:
 		return ErrMissingCryptor
 	default:
-		return nil
+		return ErrGenericDecryptionFailure
 	}
 }
 
@@ -53,9 +53,9 @@ func NewDecryptor() *Decryptor {
 		handle: C.daveDecryptorCreate(),
 	}
 
-	runtime.AddCleanup(decryptor, func(handle decryptorHandle) {
-		C.daveDecryptorDestroy(handle)
-	}, decryptor.handle)
+	runtime.SetFinalizer(decryptor, func(d *Decryptor) {
+		C.daveDecryptorDestroy(decryptor.handle)
+	})
 
 	return decryptor
 }
