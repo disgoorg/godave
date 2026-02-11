@@ -22,10 +22,7 @@ different implementations in the future.
 
 ## Libdave Installation
 
-# FIXME: Needs rewriting
-
-This library uses CGO and dynamic linking to use libdave. We automatically pull the latest libdave version and link
-against the [shared libraries published by Discord](https://github.com/discord/libdave/releases).
+This library uses CGO and dynamic linking to use libdave.
 
 We provide helpful scripts under [scripts/](https://github.com/disgoorg/godave/tree/master/scripts) to allow you to
 download pre-built binaries of build them yourself, depending on your needs. Please audit them before executing!
