@@ -71,7 +71,7 @@ Set-ExecutionPolicy RemoteSigned –Scope Process
 
 ## Example Usage
 
-For an example of how to use GoDave, please see [here](https://github.com/disgoorg/disgo/tree/feature/dave/_examples/voice)
+For an example of how to use GoDave, please see [here](https://github.com/disgoorg/disgo/tree/master/_examples/voice)
 
 ## License
 
