@@ -192,11 +192,10 @@ func (s *session) prepareEpoch(epoch int, protocolVersion uint16) {
 		return
 	}
 
-	s.encryptor.SetPassthroughMode(true)
-	for _, dec := range s.decryptors {
-		dec.TransitionToPassthroughMode(true)
-	}
-
+	s.logger.Warn("prepareEpoch: resetting MLS session via Init",
+		slog.Int("epoch", epoch),
+		slog.Int("protocol_version", int(protocolVersion)),
+	)
 	s.session.Init(protocolVersion, uint64(s.channelID), string(s.selfUserID))
 }
 
@@ -235,6 +234,10 @@ func (s *session) setupKeyRatchetForUser(userID godave.UserID, protocolVersion u
 	if userID == s.selfUserID {
 		kr := s.session.GetKeyRatchet(string(userID))
 		if !disabled && kr == nil {
+			s.logger.Warn("nil key ratchet for self after GetKeyRatchet",
+				slog.String("user_id", string(userID)),
+				slog.Int("protocol_version", int(protocolVersion)),
+			)
 			return
 		}
 		s.encryptor.SetPassthroughMode(disabled)
@@ -247,6 +250,10 @@ func (s *session) setupKeyRatchetForUser(userID godave.UserID, protocolVersion u
 	decryptor := s.decryptors[userID]
 	kr := s.session.GetKeyRatchet(string(userID))
 	if !disabled && kr == nil {
+		s.logger.Warn("nil key ratchet for user after GetKeyRatchet",
+			slog.String("user_id", string(userID)),
+			slog.Int("protocol_version", int(protocolVersion)),
+		)
 		return
 	}
 	decryptor.TransitionToPassthroughMode(disabled)
