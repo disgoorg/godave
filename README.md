@@ -54,7 +54,7 @@ export CC=/usr/bin/gcc CXX=/usr/bin/g++
 export CXXFLAGS="-Wno-error=maybe-uninitialized"
 
 # Install necessary packages
-apk add build-base cmake ninja zip unzip curl git pkgconfig perl nams go
+apk add build-base cmake ninja zip unzip curl git pkgconfig perl nasm go
 
 # FORCE_BUILD=1 as Discord do not provide pre-built binaries
 FORCE_BUILD=1 ./libdave_install.sh v1.1.0
