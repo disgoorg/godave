@@ -37,6 +37,15 @@ type Session interface {
 	// MaxSupportedProtocolVersion returns the maximum supported DAVE version for this session.
 	MaxSupportedProtocolVersion() int
 
+	// Ready reports whether the session can currently encrypt media frames.
+	//
+	// It returns false while the session is establishing or recovering its MLS
+	// epoch (e.g. right after joining or moving voice channels), a window in
+	// which Encrypt fails. AudioSenders should hold frames until Ready returns
+	// true instead of sending frames that would fail to encrypt. Sessions that
+	// never gate encryption (such as the noop session) always return true.
+	Ready() bool
+
 	// SetChannelID sets the channel ID for this session.
 	SetChannelID(channelID ChannelID)
 
