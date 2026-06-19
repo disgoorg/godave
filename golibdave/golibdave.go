@@ -2,6 +2,7 @@ package golibdave
 
 import (
 	"log/slog"
+	"sync"
 
 	"github.com/disgoorg/godave"
 	"github.com/disgoorg/godave/libdave"
@@ -43,6 +44,7 @@ type session struct {
 	callbacks                     godave.Callbacks
 	session                       *libdave.Session
 	encryptor                     *libdave.Encryptor
+	decryptorsMu                  sync.RWMutex
 	decryptors                    map[godave.UserID]*libdave.Decryptor
 	preparedTransitions           map[uint16]uint16
 	lastPreparedTransitionVersion uint16
@@ -69,7 +71,10 @@ func (s *session) Encrypt(ssrc uint32, frame []byte, encryptedFrame []byte) (int
 }
 
 func (s *session) MaxDecryptedFrameSize(userID godave.UserID, frameSize int) int {
-	if decryptor, ok := s.decryptors[userID]; ok {
+	s.decryptorsMu.RLock()
+	decryptor, ok := s.decryptors[userID]
+	s.decryptorsMu.RUnlock()
+	if ok {
 		return decryptor.GetMaxPlaintextByteSize(libdave.MediaTypeAudio, frameSize)
 	}
 
@@ -78,7 +83,10 @@ func (s *session) MaxDecryptedFrameSize(userID godave.UserID, frameSize int) int
 }
 
 func (s *session) Decrypt(userID godave.UserID, frame []byte, decryptedFrame []byte) (int, error) {
-	if decryptor, ok := s.decryptors[userID]; ok {
+	s.decryptorsMu.RLock()
+	decryptor, ok := s.decryptors[userID]
+	s.decryptorsMu.RUnlock()
+	if ok {
 		return decryptor.Decrypt(libdave.MediaTypeAudio, frame, decryptedFrame)
 	}
 
@@ -87,12 +95,16 @@ func (s *session) Decrypt(userID godave.UserID, frame []byte, decryptedFrame []b
 }
 
 func (s *session) AddUser(userID godave.UserID) {
+	s.decryptorsMu.Lock()
 	s.decryptors[userID] = libdave.NewDecryptor()
+	s.decryptorsMu.Unlock()
 	s.setupKeyRatchetForUser(userID, s.lastPreparedTransitionVersion)
 }
 
 func (s *session) RemoveUser(userID godave.UserID) {
+	s.decryptorsMu.Lock()
 	delete(s.decryptors, userID)
+	s.decryptorsMu.Unlock()
 }
 
 func (s *session) OnSelectProtocolAck(protocolVersion uint16) {
