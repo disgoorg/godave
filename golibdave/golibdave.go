@@ -54,6 +54,10 @@ func (s *session) MaxSupportedProtocolVersion() int {
 	return int(libdave.MaxSupportedProtocolVersion())
 }
 
+func (s *session) Ready() bool {
+	return !s.encryptor.IsPassthroughMode() && s.encryptor.HasKeyRatchet()
+}
+
 func (s *session) SetChannelID(channelID godave.ChannelID) {
 	s.channelID = channelID
 }
