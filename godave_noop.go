@@ -20,6 +20,9 @@ type noopSession struct{}
 func (n *noopSession) MaxSupportedProtocolVersion() int {
 	return 0
 }
+func (n *noopSession) Ready() bool {
+	return true
+}
 func (n *noopSession) MaxEncryptedFrameSize(frameSize int) int {
 	return frameSize
 }

@@ -37,6 +37,16 @@ type Session interface {
 	// MaxSupportedProtocolVersion returns the maximum supported DAVE version for this session.
 	MaxSupportedProtocolVersion() int
 
+	// Ready reports whether the session has an active E2EE epoch. Returns false
+	// during the MLS handshake window (e.g. right after joining or moving voice
+	// channels); returns true once encryption is established or when the session
+	// is the sole member of the channel. AudioSenders should hold frames while
+	// Ready returns false instead of sending them unencrypted. Encrypt still
+	// forwards frames unmodified (passthrough) rather than erroring, so callers
+	// that don't gate on Ready continue to work. Sessions that never establish
+	// E2EE (such as the noop session) always return true.
+	Ready() bool
+
 	// SetChannelID sets the channel ID for this session.
 	SetChannelID(channelID ChannelID)
 
