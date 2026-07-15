@@ -23,6 +23,9 @@ func (n *noopSession) MaxSupportedProtocolVersion() int {
 func (n *noopSession) Ready() bool {
 	return true
 }
+func (n *noopSession) Close() error {
+	return nil
+}
 func (n *noopSession) MaxEncryptedFrameSize(frameSize int) int {
 	return frameSize
 }

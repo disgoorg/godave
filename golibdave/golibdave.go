@@ -58,6 +58,12 @@ func (s *session) Ready() bool {
 	return !s.encryptor.IsPassthroughMode() && s.encryptor.HasKeyRatchet()
 }
 
+// Close implements godave.Session. The native libdave objects are freed by
+// runtime finalizers, so there is nothing to clean up here.
+func (s *session) Close() error {
+	return nil
+}
+
 func (s *session) SetChannelID(channelID godave.ChannelID) {
 	s.channelID = channelID
 }

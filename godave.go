@@ -47,6 +47,12 @@ type Session interface {
 	// E2EE (such as the noop session) always return true.
 	Ready() bool
 
+	// Close releases the session's resources and stops any background work.
+	// It is called when the voice connection is discarded (channel move,
+	// disconnect). The error return satisfies io.Closer; implementations with
+	// nothing to clean up should return nil. Safe to call multiple times.
+	Close() error
+
 	// SetChannelID sets the channel ID for this session.
 	SetChannelID(channelID ChannelID)
 
