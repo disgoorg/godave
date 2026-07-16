@@ -11,6 +11,10 @@ type KeyRatchet struct {
 }
 
 func newKeyRatchet(handle keyRatchetHandle) *KeyRatchet {
+	if handle == nil {
+		return nil
+	}
+
 	keyRatchet := &KeyRatchet{handle: handle}
 
 	runtime.SetFinalizer(keyRatchet, func(k *KeyRatchet) {
