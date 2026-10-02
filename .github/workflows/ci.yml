@@ -54,4 +54,4 @@ jobs:
               export PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig:$PKG_CONFIG_PATH"
           fi
 
-          go test ./libdave
+          go test ./libdave ./golibdave

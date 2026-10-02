@@ -3,6 +3,7 @@ package golibdave
 import (
 	"log/slog"
 	"sync"
+	"sync/atomic"
 
 	"github.com/disgoorg/godave"
 	"github.com/disgoorg/godave/libdave"
@@ -48,6 +49,11 @@ type session struct {
 	decryptors                    map[godave.UserID]*libdave.Decryptor
 	preparedTransitions           map[uint16]uint16
 	lastPreparedTransitionVersion uint16
+
+	// disabled reports whether the protocol version in effect for our own
+	// encryptor is the disabled version, in which case E2EE is never
+	// established and there is nothing to wait for.
+	disabled atomic.Bool
 }
 
 func (s *session) MaxSupportedProtocolVersion() int {
@@ -55,6 +61,12 @@ func (s *session) MaxSupportedProtocolVersion() int {
 }
 
 func (s *session) Ready() bool {
+	// A session whose protocol is disabled never establishes E2EE, which
+	// godave.Session documents as always ready.
+	if s.disabled.Load() {
+		return true
+	}
+
 	return !s.encryptor.IsPassthroughMode() && s.encryptor.HasKeyRatchet()
 }
 
@@ -250,6 +262,7 @@ func (s *session) setupKeyRatchetForUser(userID godave.UserID, protocolVersion u
 	disabled := protocolVersion == disabledProtocolVersion
 
 	if userID == s.selfUserID {
+		s.disabled.Store(disabled)
 		s.encryptor.SetPassthroughMode(disabled)
 		if !disabled {
 			s.encryptor.SetKeyRatchet(s.session.GetKeyRatchet(string(userID)))
