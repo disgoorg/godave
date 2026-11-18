@@ -9,7 +9,7 @@ defaults:
     shell: bash
 
 env:
-  LIBDAVE_VERSION: v1.1.0
+  LIBDAVE_VERSION: v1.3.0
 
 jobs:
   libdave:

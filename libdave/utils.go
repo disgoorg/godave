@@ -7,21 +7,6 @@ import (
 	"unsafe"
 )
 
-func stringSliceToC(strings []string) (**C.char, func()) {
-	cArray := make([]*C.char, len(strings))
-	for i, s := range strings {
-		cArray[i] = C.CString(s)
-	}
-
-	freeFunc := func() {
-		for _, ptr := range cArray {
-			C.free(unsafe.Pointer(ptr))
-		}
-	}
-
-	return &cArray[0], freeFunc
-}
-
 // IMPORTANT: This function will free the underlying C memory, so cArray becomes unsafe to use
 // after this function call
 func newByteSlice(cArray *C.uint8_t, length C.size_t) []byte {

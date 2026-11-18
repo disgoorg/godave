@@ -4,6 +4,7 @@ package libdave
 import "C"
 import (
 	"runtime"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -44,6 +45,10 @@ type DecryptorStats struct {
 
 type decryptorHandle = C.DAVEDecryptorHandle
 
+// destroyedDecryptors counts native decryptors freed by the finalizer, so a
+// test can tell that the finalizer runs at all.
+var destroyedDecryptors atomic.Int64
+
 type Decryptor struct {
 	handle decryptorHandle
 }
@@ -54,7 +59,8 @@ func NewDecryptor() *Decryptor {
 	}
 
 	runtime.SetFinalizer(decryptor, func(d *Decryptor) {
-		C.daveDecryptorDestroy(decryptor.handle)
+		C.daveDecryptorDestroy(d.handle)
+		destroyedDecryptors.Add(1)
 	})
 
 	return decryptor

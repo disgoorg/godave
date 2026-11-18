@@ -103,10 +103,23 @@ func (s *Session) SetExternalSender(externalSender []byte) {
 	C.daveSessionSetExternalSender(s.handle, (*C.uint8_t)(unsafe.Pointer(&externalSender[0])), C.size_t(len(externalSender)))
 }
 
-func (s *Session) ProcessProposals(proposals []byte, recognizedUserIDs []string) []byte {
-	cRecognizedUserIDs, free := stringSliceToC(recognizedUserIDs)
-	defer free()
+// AddRecognizedUser marks userID as connected to the call, which allows it in
+// the MLS group. The local user is always recognized, and recognized users
+// persist across protocol re-initialisation.
+func (s *Session) AddRecognizedUser(userID string) {
+	cUserID := C.CString(userID)
+	defer C.free(unsafe.Pointer(cUserID))
+	C.daveSessionAddRecognizedUser(s.handle, cUserID)
+}
 
+// RemoveRecognizedUser marks userID as no longer connected to the call.
+func (s *Session) RemoveRecognizedUser(userID string) {
+	cUserID := C.CString(userID)
+	defer C.free(unsafe.Pointer(cUserID))
+	C.daveSessionRemoveRecognizedUser(s.handle, cUserID)
+}
+
+func (s *Session) ProcessProposals(proposals []byte) []byte {
 	var (
 		welcomeBytes    *C.uint8_t
 		welcomeBytesLen C.size_t
@@ -115,8 +128,6 @@ func (s *Session) ProcessProposals(proposals []byte, recognizedUserIDs []string)
 		s.handle,
 		(*C.uint8_t)(unsafe.Pointer(&proposals[0])),
 		C.size_t(len(proposals)),
-		cRecognizedUserIDs,
-		C.size_t(len(recognizedUserIDs)),
 		&welcomeBytes,
 		&welcomeBytesLen,
 	)
@@ -128,16 +139,11 @@ func (s *Session) ProcessCommit(commit []byte) *CommitResult {
 	return newCommitResult(C.daveSessionProcessCommit(s.handle, (*C.uint8_t)(unsafe.Pointer(&commit[0])), C.size_t(len(commit))))
 }
 
-func (s *Session) ProcessWelcome(welcome []byte, recognizedUserIDs []string) *WelcomeResult {
-	cRecognizedUserIDs, free := stringSliceToC(recognizedUserIDs)
-	defer free()
-
+func (s *Session) ProcessWelcome(welcome []byte) *WelcomeResult {
 	return newWelcomeResult(C.daveSessionProcessWelcome(
 		s.handle,
 		(*C.uint8_t)(unsafe.Pointer(&welcome[0])),
 		C.size_t(len(welcome)),
-		cRecognizedUserIDs,
-		C.size_t(len(recognizedUserIDs)),
 	))
 }
 
