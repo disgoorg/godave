@@ -3,42 +3,34 @@ package libdave
 import (
 	"runtime"
 	"testing"
-	"weak"
+	"time"
 )
 
 // The finalizer must not capture the decryptor it frees: a closure that does
-// keeps the object reachable, so it is never collected and the C++ decryptor
-// is never destroyed. With that bug none are collected; the test tolerates a
-// few survivors because a platform may briefly keep the latest allocation
-// reachable.
-func TestDecryptorIsFreedOnceUnreachable(t *testing.T) {
+// keeps the object reachable, so the finalizer never runs and the C++
+// decryptor is never destroyed.
+func TestDecryptorIsDestroyedOnceUnreachable(t *testing.T) {
 	const n = 100
-	refs := newUnreachableDecryptors(n)
+	before := destroyedDecryptors.Load()
+	dropDecryptors(n)
 
-	alive := n
-	for i := 0; i < 10 && alive > n/2; i++ {
+	destroyed := int64(0)
+	for i := 0; i < 20 && destroyed < n/2; i++ {
 		runtime.GC()
-		alive = 0
-		for _, ref := range refs {
-			if ref.Value() != nil {
-				alive++
-			}
-		}
+		time.Sleep(10 * time.Millisecond)
+		destroyed = destroyedDecryptors.Load() - before
 	}
-	if alive > n/2 {
-		t.Fatalf("%d of %d decryptors are still reachable after GC; their finalizers will never run", alive, n)
+	if destroyed < n/2 {
+		t.Fatalf("%d of %d dropped decryptors were destroyed; their finalizers do not run", destroyed, n)
 	}
 }
 
-// newUnreachableDecryptors creates decryptors and keeps only weak references
-// to them. It is not inlined so that no strong reference survives in the
-// caller's frame.
+// dropDecryptors creates decryptors and keeps no reference to them. It is not
+// inlined so that none survives in the caller's frame.
 //
 //go:noinline
-func newUnreachableDecryptors(n int) []weak.Pointer[Decryptor] {
-	refs := make([]weak.Pointer[Decryptor], n)
-	for i := range refs {
-		refs[i] = weak.Make(NewDecryptor())
+func dropDecryptors(n int) {
+	for range n {
+		NewDecryptor()
 	}
-	return refs
 }
