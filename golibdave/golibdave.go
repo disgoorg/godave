@@ -117,6 +117,7 @@ func (s *session) Decrypt(userID godave.UserID, frame []byte, decryptedFrame []b
 }
 
 func (s *session) AddUser(userID godave.UserID) {
+	s.session.AddRecognizedUser(string(userID))
 	s.decryptorsMu.Lock()
 	s.decryptors[userID] = libdave.NewDecryptor()
 	s.decryptorsMu.Unlock()
@@ -127,6 +128,7 @@ func (s *session) RemoveUser(userID godave.UserID) {
 	s.decryptorsMu.Lock()
 	delete(s.decryptors, userID)
 	s.decryptorsMu.Unlock()
+	s.session.RemoveRecognizedUser(string(userID))
 }
 
 func (s *session) OnSelectProtocolAck(protocolVersion uint16) {
@@ -158,7 +160,7 @@ func (s *session) OnDaveMLSExternalSenderPackage(externalSenderPackage []byte) {
 }
 
 func (s *session) OnDaveMLSProposals(proposals []byte) {
-	commitWelcome := s.session.ProcessProposals(proposals, s.recognizedUserIDs())
+	commitWelcome := s.session.ProcessProposals(proposals)
 
 	if commitWelcome != nil {
 		s.sendMLSCommitWelcome(commitWelcome)
@@ -185,7 +187,7 @@ func (s *session) OnDaveMLSPrepareCommitTransition(transitionID uint16, commitMe
 }
 
 func (s *session) OnDaveMLSWelcome(transitionID uint16, welcomeMessage []byte) {
-	res := s.session.ProcessWelcome(welcomeMessage, s.recognizedUserIDs())
+	res := s.session.ProcessWelcome(welcomeMessage)
 
 	if res == nil {
 		s.sendInvalidCommitWelcome(transitionID)
@@ -197,18 +199,6 @@ func (s *session) OnDaveMLSWelcome(transitionID uint16, welcomeMessage []byte) {
 	if transitionID != initTransitionId {
 		s.sendReadyForTransition(transitionID)
 	}
-}
-
-func (s *session) recognizedUserIDs() []string {
-	userIDs := make([]string, 0, len(s.decryptors)+1)
-
-	userIDs = append(userIDs, string(s.selfUserID))
-
-	for userID := range s.decryptors {
-		userIDs = append(userIDs, string(userID))
-	}
-
-	return userIDs
 }
 
 func (s *session) protocolInit(protocolVersion uint16) {

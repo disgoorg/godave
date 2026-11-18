@@ -41,7 +41,7 @@ Open a terminal and execute the following commands:
 # Set CC/CXX variables to change the compiler used (ie, for clang
 #export CC=/usr/bin/clang CXX=/usr/bin/clang
 
-./libdave_install.sh v1.1.0
+./libdave_install.sh v1.3.0
 ```
 
 ### MUSL Linux
@@ -57,7 +57,7 @@ export CXXFLAGS="-Wno-error=maybe-uninitialized"
 apk add build-base cmake ninja zip unzip curl git pkgconfig perl nasm go
 
 # FORCE_BUILD=1 as Discord do not provide pre-built binaries
-FORCE_BUILD=1 ./libdave_install.sh v1.1.0
+FORCE_BUILD=1 ./libdave_install.sh v1.3.0
 ```
 
 ### Windows instructions
@@ -66,7 +66,7 @@ Open Powershell and execute the following commands:
 
 ```ps1
 Set-ExecutionPolicy RemoteSigned –Scope Process
-.\libdave_install.ps1 v1.1.0
+.\libdave_install.ps1 v1.3.0
 ```
 
 ## Example Usage
