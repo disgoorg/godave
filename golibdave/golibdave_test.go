@@ -60,3 +60,21 @@ func TestReadyAfterDowngradeExecutes(t *testing.T) {
 		t.Error("expected Ready to be true once the downgrade executes")
 	}
 }
+
+// A frame from a user without a decryptor is passed through unchanged. The
+// copy into the output buffer must not run backwards, or the caller gets
+// silence and the input frame is overwritten.
+func TestDecryptPassesThroughFramesFromUnknownUsers(t *testing.T) {
+	s := newTestSession()
+
+	frame := []byte{0xF8, 0xFF, 0xFE}
+	out := make([]byte, s.MaxDecryptedFrameSize("2", len(frame)))
+
+	n, err := s.Decrypt("2", frame, out)
+	if err != nil || !bytes.Equal(out[:n], []byte{0xF8, 0xFF, 0xFE}) {
+		t.Errorf("expected the frame passed through, got %x, %v", out[:n], err)
+	}
+	if !bytes.Equal(frame, []byte{0xF8, 0xFF, 0xFE}) {
+		t.Errorf("input frame was overwritten: %x", frame)
+	}
+}
