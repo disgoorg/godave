@@ -54,7 +54,7 @@ func NewDecryptor() *Decryptor {
 	}
 
 	runtime.SetFinalizer(decryptor, func(d *Decryptor) {
-		C.daveDecryptorDestroy(decryptor.handle)
+		C.daveDecryptorDestroy(d.handle)
 	})
 
 	return decryptor
