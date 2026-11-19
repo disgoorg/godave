@@ -113,7 +113,7 @@ func (s *session) Decrypt(userID godave.UserID, frame []byte, decryptedFrame []b
 	}
 
 	// assume passthrough
-	return copy(decryptedFrame, frame), nil
+	return copy(decryptedFrame[:cap(decryptedFrame)], frame), nil
 }
 
 func (s *session) AddUser(userID godave.UserID) {
