@@ -78,3 +78,19 @@ func TestDecryptPassesThroughFramesFromUnknownUsers(t *testing.T) {
 		t.Errorf("input frame was overwritten: %x", frame)
 	}
 }
+
+// Callers size the output by capacity, as the decryptor path does: disgo grows
+// its buffer to MaxDecryptedFrameSize with slices.Grow, which leaves the length
+// where it was. A passthrough frame longer than that length must still come
+// back whole.
+func TestDecryptPassesThroughIntoCapacity(t *testing.T) {
+	s := newTestSession()
+
+	frame := bytes.Repeat([]byte{0xAB}, 900)
+	out := make([]byte, 512, s.MaxDecryptedFrameSize("2", len(frame)))
+
+	n, err := s.Decrypt("2", frame, out)
+	if err != nil || n != len(frame) || !bytes.Equal(out[:n], frame) {
+		t.Errorf("expected the %d-byte frame passed through, got %d bytes, %v", len(frame), n, err)
+	}
+}
